@@ -130,6 +130,11 @@
     <string name="delete_account">Delete account</string>
     <string name="delete_account_confirm">Delete account? All data will be permanently deleted.</string>
     <string name="order_history">Order history</string>
+    <string name="order_history_empty">No orders available yet.</string>
+    <string name="order_id_label">Order: %1$s</string>
+    <string name="order_status_label">Status: %1$s</string>
+    <string name="order_total_label">Total: EUR %1$.2f</string>
+    <string name="order_created_label">Created: %1$s</string>
 
     <!-- Shared / Public -->
     <string name="shared_by">Shared via Luminens</string>

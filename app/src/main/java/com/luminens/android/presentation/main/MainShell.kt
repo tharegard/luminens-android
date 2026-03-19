@@ -28,6 +28,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.luminens.android.R
 import com.luminens.android.presentation.account.AccountScreen
+import com.luminens.android.presentation.account.OrderHistoryScreen
 import com.luminens.android.presentation.albums.AlbumsScreen
 import com.luminens.android.presentation.gallery.GalleryScreen
 import com.luminens.android.presentation.generate.GenerateScreen
@@ -126,7 +127,11 @@ fun MainShell(
                     onManageSubscription = { /* open billing/WebView */ },
                     onSignOut = onSignedOut,
                     onPrintOrder = onNavigateToPrint,
+                    onOrderHistory = { navController.navigate(Screen.OrderHistory.route) },
                 )
+            }
+            composable(Screen.OrderHistory.route) {
+                OrderHistoryScreen(onBack = { navController.popBackStack() })
             }
         }
     }

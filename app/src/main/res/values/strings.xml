@@ -154,6 +154,11 @@
     <string name="delete_account">Elimina account</string>
     <string name="delete_account_confirm">Eliminare l\'account? Tutti i dati verranno eliminati definitivamente.</string>
     <string name="order_history">Storico ordini</string>
+    <string name="order_history_empty">Nessun ordine disponibile.</string>
+    <string name="order_id_label">Ordine: %1$s</string>
+    <string name="order_status_label">Stato: %1$s</string>
+    <string name="order_total_label">Totale: EUR %1$.2f</string>
+    <string name="order_created_label">Creato il: %1$s</string>
 
     <!-- Shared / Public -->
     <string name="shared_by">Condiviso da Luminens</string>

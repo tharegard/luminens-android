@@ -46,3 +46,9 @@ class AlbumRepository @Inject constructor(
     suspend fun getPublicAlbum(id: String) = dataSource.getPublicAlbum(id)
     suspend fun getPublicAlbumPhotos(albumId: String) = dataSource.getPublicAlbumPhotos(albumId)
 }
+
+class OrderRepository @Inject constructor(
+    private val dataSource: SupabaseDataSource,
+) {
+    suspend fun getPrintOrders() = dataSource.getPrintOrders()
+}

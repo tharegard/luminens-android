@@ -27,6 +27,7 @@ sealed class Screen(val route: String) {
     }
     data object Camera : Screen("camera")
     data object PrintOrder : Screen("print_order")
+    data object OrderHistory : Screen("order_history")
     data object OrderSuccess : Screen("order_success")
 
     // Cart

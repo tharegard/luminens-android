@@ -52,6 +52,7 @@ fun AccountScreen(
     onSignOut: () -> Unit,
     onManageSubscription: () -> Unit,
     onPrintOrder: () -> Unit,
+    onOrderHistory: () -> Unit,
     viewModel: AccountViewModel = hiltViewModel(),
 ) {
     val profile by viewModel.profile.collectAsState()
@@ -161,9 +162,17 @@ fun AccountScreen(
                     }
                 }
 
-                // Order history button
+                // New print order
                 OutlinedButton(
                     onClick = onPrintOrder,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.print_order_title))
+                }
+
+                // Order history button
+                OutlinedButton(
+                    onClick = onOrderHistory,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.order_history))

@@ -2,6 +2,7 @@ package com.luminens.android.data.remote
 
 import com.luminens.android.data.model.Album
 import com.luminens.android.data.model.Photo
+import com.luminens.android.data.model.PrintOrder
 import com.luminens.android.data.model.Profile
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -179,6 +180,18 @@ class SupabaseDataSource @Inject constructor(
 
     suspend fun updateAlbumPublic(id: String, isPublic: Boolean) = withContext(Dispatchers.IO) {
         db["albums"].update(mapOf("is_public" to isPublic)) { filter { eq("id", id) } }
+    }
+
+    // ── Print orders ───────────────────────────────────────────────────────────
+
+    suspend fun getPrintOrders(): List<PrintOrder> = withContext(Dispatchers.IO) {
+        val uid = userId ?: return@withContext emptyList()
+        db["print_orders"]
+            .select {
+                filter { eq("user_id", uid) }
+                order("created_at", Order.DESCENDING)
+            }
+            .decodeList<PrintOrder>()
     }
 
     // ── Storage: Signed URL ──────────────────────────────────────────────────
