@@ -216,4 +216,6 @@
     <string name="shared_album_cta_title">Discover photos generated with Luminens AI</string>
     <string name="shared_photo_cta_title">This photo was generated with Luminens AI</string>
     <string name="shared_try_free">Try Luminens for free</string>
+    <string name="category_adults">Adults</string>
+    <string name="category_kids">Kids</string>
 </resources>

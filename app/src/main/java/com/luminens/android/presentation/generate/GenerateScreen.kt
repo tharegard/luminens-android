@@ -41,6 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -159,6 +160,8 @@ fun GenerateScreen(
                     onBuyCredits = onNavigateToBuyCredits,
                 )
                 GenerateStep.STYLE -> StyleStep(
+                    selectedCategory = params.category,
+                    onCategorySelected = viewModel::onCategorySelected,
                     onStyleSelected = viewModel::onStyleSelected,
                 )
                 GenerateStep.SETTINGS -> SettingsStep(
@@ -245,9 +248,31 @@ private fun UploadStep(
 }
 
 @Composable
-private fun StyleStep(onStyleSelected: (com.luminens.android.data.model.PhotoStyle) -> Unit) {
-    val styles = PhotoStylesData.all
+private fun StyleStep(
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit,
+    onStyleSelected: (com.luminens.android.data.model.PhotoStyle) -> Unit,
+) {
+    val styles = PhotoStylesData.all.filter {
+        if (selectedCategory == "kids") it.category.name == "KIDS" else it.category.name == "ADULTS"
+    }
     Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilterChip(
+                selected = selectedCategory == "adults",
+                onClick = { onCategorySelected("adults") },
+                label = { Text(stringResource(R.string.category_adults)) },
+            )
+            FilterChip(
+                selected = selectedCategory == "kids",
+                onClick = { onCategorySelected("kids") },
+                label = { Text(stringResource(R.string.category_kids)) },
+            )
+        }
+
         Text(
             stringResource(R.string.choose_style),
             style = MaterialTheme.typography.titleMedium,

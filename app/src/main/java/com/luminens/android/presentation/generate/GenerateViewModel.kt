@@ -115,6 +115,18 @@ class GenerateViewModel @Inject constructor(
         _step.value = GenerateStep.SETTINGS
     }
 
+    fun onCategorySelected(category: String) {
+        if (category != "adults" && category != "kids") return
+        val defaultSetting = if (category == "kids") "kids-studio" else "studio"
+        _generationParams.update { params ->
+            params.copy(
+                category = category,
+                setting = defaultSetting,
+                subSetting = null,
+            )
+        }
+    }
+
     fun onPromptChanged(text: String) {
         _prompt.value = text
         _enhancedPrompt.value = null

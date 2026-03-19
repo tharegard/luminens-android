@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +42,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -62,6 +65,7 @@ fun GalleryScreen(
     val photos by viewModel.photos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val selectedIds by viewModel.selectedPhotoIds.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var photoToDelete by remember { mutableStateOf<Photo?>(null) }
@@ -85,21 +89,18 @@ fun GalleryScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.CameraAlt,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Luminens",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
+                    Text(
+                        text = buildAnnotatedString {
+                            pushStyle(SpanStyle(color = androidx.compose.ui.graphics.Color.White))
+                            append("Lumi")
+                            pop()
+                            pushStyle(SpanStyle(color = MaterialTheme.colorScheme.primary))
+                            append("nens")
+                            pop()
+                        },
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
                 },
                 actions = {
                     if (selectedIds.isNotEmpty()) {
@@ -129,26 +130,48 @@ fun GalleryScreen(
                 )
             }
             else -> {
-                LazyVerticalStaggeredGrid(
-                    columns = StaggeredGridCells.Fixed(2),
+                androidx.compose.foundation.layout.Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalItemSpacing = 4.dp,
                 ) {
-                    items(photos, key = { it.id }) { photo ->
-                        PhotoGridItem(
-                            photo = photo,
-                            isSelected = photo.id in selectedIds,
-                            isSelectionMode = selectedIds.isNotEmpty(),
-                            onClick = {
-                                if (selectedIds.isNotEmpty()) viewModel.toggleSelection(photo.id)
-                                else onPhotoClick(photo.id)
-                            },
-                            onLongClick = { viewModel.toggleSelection(photo.id) },
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChip(
+                            selected = selectedCategory == "adults",
+                            onClick = { viewModel.setCategory("adults") },
+                            label = { Text(stringResource(R.string.category_adults)) },
                         )
+                        FilterChip(
+                            selected = selectedCategory == "kids",
+                            onClick = { viewModel.setCategory("kids") },
+                            label = { Text(stringResource(R.string.category_kids)) },
+                        )
+                    }
+
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalItemSpacing = 4.dp,
+                    ) {
+                        items(photos, key = { it.id }) { photo ->
+                            PhotoGridItem(
+                                photo = photo,
+                                isSelected = photo.id in selectedIds,
+                                isSelectionMode = selectedIds.isNotEmpty(),
+                                onClick = {
+                                    if (selectedIds.isNotEmpty()) viewModel.toggleSelection(photo.id)
+                                    else onPhotoClick(photo.id)
+                                },
+                                onLongClick = { viewModel.toggleSelection(photo.id) },
+                            )
+                        }
                     }
                 }
             }

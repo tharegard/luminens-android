@@ -241,4 +241,6 @@
     <string name="shared_album_cta_title">Scopri le foto generate con Luminens AI</string>
     <string name="shared_photo_cta_title">Questa foto è stata generata con Luminens AI</string>
     <string name="shared_try_free">Prova Luminens gratis</string>
+    <string name="category_adults">Adults</string>
+    <string name="category_kids">Kids</string>
 </resources>

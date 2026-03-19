@@ -16,8 +16,18 @@ class GalleryViewModel @Inject constructor(
     private val photoRepository: PhotoRepository,
 ) : ViewModel() {
 
+    companion object {
+        private const val CATEGORY_ADULTS = "adults"
+        private const val CATEGORY_KIDS = "kids"
+    }
+
+    private var allPhotos: List<Photo> = emptyList()
+
     private val _photos = MutableStateFlow<List<Photo>>(emptyList())
     val photos: StateFlow<List<Photo>> = _photos.asStateFlow()
+
+    private val _selectedCategory = MutableStateFlow(CATEGORY_ADULTS)
+    val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -38,10 +48,19 @@ class GalleryViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             runCatching { photoRepository.getPhotos() }
-                .onSuccess { _photos.value = it }
+                .onSuccess {
+                    allPhotos = it
+                    applyCategoryFilter()
+                }
                 .onFailure { _error.value = it.message }
             _isLoading.value = false
         }
+    }
+
+    fun setCategory(category: String) {
+        if (category != CATEGORY_ADULTS && category != CATEGORY_KIDS) return
+        _selectedCategory.value = category
+        applyCategoryFilter()
     }
 
     fun toggleSelection(photoId: String) {
@@ -77,6 +96,15 @@ class GalleryViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { photoRepository.updatePhotoPublic(photoId, !current) }
                 .onSuccess { loadPhotos() }
+        }
+    }
+
+    private fun applyCategoryFilter() {
+        val selected = _selectedCategory.value
+        _photos.value = allPhotos.filter { photo ->
+            val category = photo.positionData?.category
+            if (selected == CATEGORY_KIDS) category == CATEGORY_KIDS
+            else category == CATEGORY_ADULTS || category.isNullOrBlank()
         }
     }
 }
