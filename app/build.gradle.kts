@@ -66,6 +66,7 @@ android {
         // Required for 16 KB page-size compatibility (Android 15+)
         jniLibs {
             useLegacyPackaging = false
+            excludes += "**/libyuv-decoder.so"
         }
     }
 }
