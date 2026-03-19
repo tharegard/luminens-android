@@ -234,10 +234,10 @@ private fun MagicAiDialog(
     onFeaturePrompt: (String) -> Unit,
 ) {
     val features = listOf(
-        "remove_bg" to "Remove background and keep subject clean",
-        "studio_light" to "Add soft studio lighting and subtle shadows",
-        "enhance" to "Enhance clarity and details while preserving identity",
-        "bokeh" to "Create natural background blur and depth",
+        stringResource(R.string.magic_ai_feature_remove_bg) to stringResource(R.string.magic_ai_feature_remove_bg_prompt),
+        stringResource(R.string.magic_ai_feature_studio_light) to stringResource(R.string.magic_ai_feature_studio_light_prompt),
+        stringResource(R.string.magic_ai_feature_enhance) to stringResource(R.string.magic_ai_feature_enhance_prompt),
+        stringResource(R.string.magic_ai_feature_bokeh) to stringResource(R.string.magic_ai_feature_bokeh_prompt),
     )
     val ratios = listOf("1:1", "4:5", "3:4", "9:16")
 
@@ -247,9 +247,9 @@ private fun MagicAiDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(features, key = { it.first }) { feature ->
-                        OutlinedButton(onClick = { onFeaturePrompt(feature.second) }) {
-                            Text(feature.first)
+                    items(features, key = { it.first }) { (label, featurePrompt) ->
+                        OutlinedButton(onClick = { onFeaturePrompt(featurePrompt) }) {
+                            Text(label)
                         }
                     }
                 }

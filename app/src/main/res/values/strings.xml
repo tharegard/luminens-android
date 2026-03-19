@@ -206,6 +206,15 @@
     <string name="magic_ai_prompt_label">Prompt AI</string>
     <string name="magic_ai_generate">Genera</string>
     <string name="magic_ai_apply">Applica</string>
+    <string name="magic_ai_feature_remove_bg">Rimuovi sfondo</string>
+    <string name="magic_ai_feature_remove_bg_prompt">Rimuovi lo sfondo mantenendo il soggetto pulito e naturale</string>
+    <string name="magic_ai_feature_studio_light">Luce studio</string>
+    <string name="magic_ai_feature_studio_light_prompt">Aggiungi illuminazione morbida da studio con ombre leggere</string>
+    <string name="magic_ai_feature_enhance">Migliora dettagli</string>
+    <string name="magic_ai_feature_enhance_prompt">Migliora nitidezza e dettagli mantenendo l'identita</string>
+    <string name="magic_ai_feature_bokeh">Bokeh naturale</string>
+    <string name="magic_ai_feature_bokeh_prompt">Crea sfocatura naturale dello sfondo e maggiore profondita</string>
+    <string name="magic_ai_timeout_error">Magic AI in timeout. Riprova tra poco.</string>
 
     <!-- Print -->
     <string name="print_title">Stampa foto</string>

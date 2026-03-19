@@ -181,6 +181,15 @@
     <string name="magic_ai_prompt_label">AI prompt</string>
     <string name="magic_ai_generate">Generate</string>
     <string name="magic_ai_apply">Apply</string>
+    <string name="magic_ai_feature_remove_bg">Remove background</string>
+    <string name="magic_ai_feature_remove_bg_prompt">Remove background and keep the subject clean and natural</string>
+    <string name="magic_ai_feature_studio_light">Studio light</string>
+    <string name="magic_ai_feature_studio_light_prompt">Add soft studio lighting with subtle shadows</string>
+    <string name="magic_ai_feature_enhance">Enhance details</string>
+    <string name="magic_ai_feature_enhance_prompt">Enhance clarity and details while preserving identity</string>
+    <string name="magic_ai_feature_bokeh">Natural bokeh</string>
+    <string name="magic_ai_feature_bokeh_prompt">Create natural background blur and stronger depth</string>
+    <string name="magic_ai_timeout_error">Magic AI timed out. Please retry shortly.</string>
 
     <!-- Print -->
     <string name="print_title">Print photo</string>

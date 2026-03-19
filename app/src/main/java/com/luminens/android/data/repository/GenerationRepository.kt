@@ -11,6 +11,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -135,7 +137,11 @@ class GenerationRepository @Inject constructor(
         val response = functions.invoke("edit-with-ai", body = body)
         val json = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         val backendError = json["error"]?.jsonPrimitive?.contentOrNull
+        val refusal = json["refusal"]?.jsonPrimitive?.booleanOrNull ?: false
         if (!backendError.isNullOrBlank()) {
+            if (refusal) {
+                throw IllegalStateException("REFUSAL: $backendError")
+            }
             throw IllegalStateException(backendError)
         }
         json["editedImageUrl"]?.jsonPrimitive?.content

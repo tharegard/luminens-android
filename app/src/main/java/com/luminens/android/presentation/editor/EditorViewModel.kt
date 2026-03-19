@@ -19,11 +19,14 @@ import jp.co.cyberagent.android.gpuimage.filter.GPUImageHueFilter
 import jp.co.cyberagent.android.gpuimage.filter.GPUImageSaturationFilter
 import jp.co.cyberagent.android.gpuimage.filter.GPUImageSharpenFilter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 data class EditorState(
@@ -50,6 +53,11 @@ class EditorViewModel @Inject constructor(
     private val photoRepository: PhotoRepository,
     private val generationRepository: GenerationRepository,
 ) : ViewModel() {
+
+    companion object {
+        private const val MAGIC_TIMEOUT_MS = 60_000L
+        private const val MAGIC_MAX_ATTEMPTS = 2
+    }
 
     private val _state = MutableStateFlow(EditorState())
     val state: StateFlow<EditorState> = _state.asStateFlow()
@@ -156,15 +164,18 @@ class EditorViewModel @Inject constructor(
                 val imageDataUrl = withContext(Dispatchers.Default) {
                     bitmapToDataUrl(bitmap)
                 }
-                generationRepository.editWithAi(
-                    prompt = prompt,
-                    aspectRatio = aspectRatio,
-                    imageDataUrl = imageDataUrl,
-                )
+                requestMagicAiWithRetry(prompt = prompt, aspectRatio = aspectRatio, imageDataUrl = imageDataUrl)
             }.onSuccess { editedUrl ->
                 _state.value = _state.value.copy(magicPreviewUrl = editedUrl)
             }.onFailure {
-                _state.value = _state.value.copy(magicError = it.message)
+                val raw = it.message.orEmpty()
+                val message = when {
+                    it is TimeoutCancellationException -> "Magic AI timed out. Please retry shortly."
+                    raw.startsWith("REFUSAL:") -> raw.removePrefix("REFUSAL:").trim()
+                    raw.isNotBlank() -> raw
+                    else -> "Magic AI error"
+                }
+                _state.value = _state.value.copy(magicError = message)
             }
             _state.value = _state.value.copy(isMagicGenerating = false)
         }
@@ -228,5 +239,30 @@ class EditorViewModel @Inject constructor(
         val bytes = out.toByteArray()
         val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
         return "data:image/jpeg;base64,$base64"
+    }
+
+    private suspend fun requestMagicAiWithRetry(
+        prompt: String,
+        aspectRatio: String,
+        imageDataUrl: String,
+    ): String {
+        var lastError: Throwable? = null
+        repeat(MAGIC_MAX_ATTEMPTS) { attempt ->
+            try {
+                return withTimeout(MAGIC_TIMEOUT_MS) {
+                    generationRepository.editWithAi(
+                        prompt = prompt,
+                        aspectRatio = aspectRatio,
+                        imageDataUrl = imageDataUrl,
+                    )
+                }
+            } catch (e: Throwable) {
+                lastError = e
+                if (attempt < MAGIC_MAX_ATTEMPTS - 1) {
+                    delay(800L)
+                }
+            }
+        }
+        throw (lastError ?: IllegalStateException("Magic AI request failed"))
     }
 }
