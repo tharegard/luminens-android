@@ -17,9 +17,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RemoveCircle
@@ -337,7 +337,7 @@ fun AlbumDetailScreen(
                                     modifier = Modifier.offset(x = 6.dp),
                                 ) {
                                     Icon(
-                                        Icons.Default.ArrowForwardIos,
+                                        Icons.AutoMirrored.Filled.ArrowForwardIos,
                                         contentDescription = "Move next",
                                         tint = MaterialTheme.colorScheme.onPrimary,
                                     )

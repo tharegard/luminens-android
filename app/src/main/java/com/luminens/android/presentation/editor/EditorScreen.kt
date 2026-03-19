@@ -26,11 +26,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Crop
-import androidx.compose.material.icons.filled.Redo
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -118,10 +118,10 @@ fun EditorScreen(
                         Icon(Icons.Default.AutoAwesome, contentDescription = stringResource(R.string.magic_ai_title))
                     }
                     IconButton(onClick = { viewModel.undo(context) }) {
-                        Icon(Icons.Default.Undo, contentDescription = stringResource(R.string.undo))
+                        Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.undo))
                     }
                     IconButton(onClick = { viewModel.redo(context) }) {
-                        Icon(Icons.Default.Redo, contentDescription = stringResource(R.string.redo))
+                        Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = stringResource(R.string.redo))
                     }
                     IconButton(
                         onClick = { viewModel.savePhoto(photoId, context) { onBack() } },
