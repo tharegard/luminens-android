@@ -1,5 +1,6 @@
 package com.luminens.android.presentation.albums
 
+import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +31,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -42,6 +45,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +64,7 @@ import coil3.compose.AsyncImage
 import com.luminens.android.R
 import com.luminens.android.data.model.Photo
 import com.luminens.android.presentation.components.ConfirmDeleteDialog
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -76,6 +81,9 @@ fun AlbumDetailScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val album = albums.firstOrNull { it.id == albumId }
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showAddPhotosDialog by remember { mutableStateOf(false) }
@@ -95,6 +103,7 @@ fun AlbumDetailScreen(
     }
 
     if (showShareDialog && album != null) {
+        val shareUrl = buildAlbumShareUrl(albumId)
         AlertDialog(
             onDismissRequest = { showShareDialog = false },
             title = { Text(stringResource(R.string.share_album)) },
@@ -115,7 +124,7 @@ fun AlbumDetailScreen(
                     }
                     if (album.isPublic) {
                         Text(
-                            "https://luminens.com/shared-album/$albumId",
+                            shareUrl,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -125,7 +134,8 @@ fun AlbumDetailScreen(
             confirmButton = {
                 if (album.isPublic) {
                     Button(onClick = {
-                        clipboardManager.setText(AnnotatedString("https://luminens.com/shared-album/$albumId"))
+                        clipboardManager.setText(AnnotatedString(shareUrl))
+                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.link_copied)) }
                         showShareDialog = false
                     }) {
                         Text(stringResource(R.string.copy_link))
@@ -133,7 +143,20 @@ fun AlbumDetailScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showShareDialog = false }) { Text(stringResource(R.string.cancel)) }
+                if (album.isPublic) {
+                    TextButton(onClick = {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, shareUrl)
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, context.getString(R.string.share_album)))
+                        showShareDialog = false
+                    }) {
+                        Text(stringResource(R.string.share_album))
+                    }
+                } else {
+                    TextButton(onClick = { showShareDialog = false }) { Text(stringResource(R.string.cancel)) }
+                }
             },
         )
     }
@@ -210,6 +233,7 @@ fun AlbumDetailScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(album?.name ?: "") },
@@ -325,3 +349,5 @@ fun AlbumDetailScreen(
         }
     }
 }
+
+private fun buildAlbumShareUrl(albumId: String): String = "https://luminens.com/share/$albumId"
