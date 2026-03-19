@@ -183,6 +183,7 @@
     <string name="premium_badge">Premium</string>
     <string name="free_badge">Free</string>
     <string name="copy_link">Copia link</string>
+    <string name="select_all">Seleziona tutto</string>
     <string name="link_copied">Link copiato!</string>
 
     <!-- Generate screen -->

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -290,6 +291,27 @@ fun AlbumDetailScreen(
                 actions = {
                     if (selectedPhotoIds.isNotEmpty()) {
                         IconButton(onClick = {
+                            val selectedUrls = photos
+                                .filter { it.id in selectedPhotoIds }
+                                .joinToString(separator = "\n") { it.url }
+                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, selectedUrls)
+                            }
+                            context.startActivity(Intent.createChooser(sendIntent, context.getString(R.string.share_album)))
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_album))
+                        }
+                        IconButton(onClick = {
+                            selectedPhotoIds = if (selectedPhotoIds.size == photos.size) {
+                                emptySet()
+                            } else {
+                                photos.map { it.id }.toSet()
+                            }
+                        }) {
+                            Icon(Icons.Default.SelectAll, contentDescription = stringResource(R.string.select_all))
+                        }
+                        IconButton(onClick = {
                             selectedPhotoIds.forEach { id ->
                                 viewModel.removePhotoFromAlbum(albumId, id)
                             }
@@ -372,11 +394,13 @@ fun AlbumDetailScreen(
                                 onClick = { viewModel.removePhotoFromAlbum(albumId, photo.id) },
                                 modifier = Modifier.align(Alignment.TopEnd),
                             ) {
-                                Icon(
-                                    Icons.Default.RemoveCircle,
-                                    contentDescription = stringResource(R.string.remove_from_album),
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
+                                if (selectedPhotoIds.isEmpty()) {
+                                    Icon(
+                                        Icons.Default.RemoveCircle,
+                                        contentDescription = stringResource(R.string.remove_from_album),
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                }
                             }
 
                             if (photo.id in selectedPhotoIds) {
@@ -399,41 +423,43 @@ fun AlbumDetailScreen(
                                     .padding(bottom = 4.dp),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                IconButton(
-                                    onClick = {
-                                        if (index > 0) {
-                                            val reordered = photos.map { it.id }.toMutableList()
-                                            val item = reordered.removeAt(index)
-                                            reordered.add(index - 1, item)
-                                            viewModel.reorderAlbumPhotos(albumId, reordered)
-                                        }
-                                    },
-                                    enabled = index > 0,
-                                    modifier = Modifier.offset(x = (-6).dp),
-                                ) {
-                                    Icon(
-                                        Icons.Default.ArrowBackIosNew,
-                                        contentDescription = "Move previous",
-                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        if (index < photos.lastIndex) {
-                                            val reordered = photos.map { it.id }.toMutableList()
-                                            val item = reordered.removeAt(index)
-                                            reordered.add(index + 1, item)
-                                            viewModel.reorderAlbumPhotos(albumId, reordered)
-                                        }
-                                    },
-                                    enabled = index < photos.lastIndex,
-                                    modifier = Modifier.offset(x = 6.dp),
-                                ) {
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.ArrowForwardIos,
-                                        contentDescription = "Move next",
-                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                    )
+                                if (selectedPhotoIds.isEmpty()) {
+                                    IconButton(
+                                        onClick = {
+                                            if (index > 0) {
+                                                val reordered = photos.map { it.id }.toMutableList()
+                                                val item = reordered.removeAt(index)
+                                                reordered.add(index - 1, item)
+                                                viewModel.reorderAlbumPhotos(albumId, reordered)
+                                            }
+                                        },
+                                        enabled = index > 0,
+                                        modifier = Modifier.offset(x = (-6).dp),
+                                    ) {
+                                        Icon(
+                                            Icons.Default.ArrowBackIosNew,
+                                            contentDescription = "Move previous",
+                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            if (index < photos.lastIndex) {
+                                                val reordered = photos.map { it.id }.toMutableList()
+                                                val item = reordered.removeAt(index)
+                                                reordered.add(index + 1, item)
+                                                viewModel.reorderAlbumPhotos(albumId, reordered)
+                                            }
+                                        },
+                                        enabled = index < photos.lastIndex,
+                                        modifier = Modifier.offset(x = 6.dp),
+                                    ) {
+                                        Icon(
+                                            Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                            contentDescription = "Move next",
+                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                        )
+                                    }
                                 }
                             }
                         }
