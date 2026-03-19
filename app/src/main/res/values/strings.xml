@@ -159,6 +159,10 @@
     <string name="order_status_label">Stato: %1$s</string>
     <string name="order_total_label">Totale: EUR %1$.2f</string>
     <string name="order_created_label">Creato il: %1$s</string>
+    <string name="language_title">Lingua</string>
+    <string name="language_system">Sistema</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_english">English</string>
 
     <!-- Shared / Public -->
     <string name="shared_by">Condiviso da Luminens</string>

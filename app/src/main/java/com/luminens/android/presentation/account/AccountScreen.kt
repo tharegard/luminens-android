@@ -39,6 +39,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.luminens.android.R
 import com.luminens.android.presentation.theme.PlanEditorColor
@@ -99,6 +101,56 @@ fun AccountScreen(
             Spacer(Modifier.height(8.dp))
 
             profile?.let { p ->
+                // Language selector
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.language_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+
+                        val currentLanguage = remember {
+                            mutableStateOf(
+                                AppCompatDelegate.getApplicationLocales()[0]?.language ?: "system"
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            LanguageOptionChip(
+                                label = stringResource(R.string.language_system),
+                                selected = currentLanguage.value == "system",
+                                onClick = {
+                                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
+                                    currentLanguage.value = "system"
+                                },
+                            )
+                            LanguageOptionChip(
+                                label = stringResource(R.string.language_italian),
+                                selected = currentLanguage.value == "it",
+                                onClick = {
+                                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("it"))
+                                    currentLanguage.value = "it"
+                                },
+                            )
+                            LanguageOptionChip(
+                                label = stringResource(R.string.language_english),
+                                selected = currentLanguage.value == "en",
+                                onClick = {
+                                    AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
+                                    currentLanguage.value = "en"
+                                },
+                            )
+                        }
+                    }
+                }
+
                 // Plan card
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(
@@ -195,6 +247,26 @@ fun AccountScreen(
             Spacer(Modifier.height(24.dp))
         }
     }
+}
+
+@Composable
+private fun LanguageOptionChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    SuggestionChip(
+        onClick = onClick,
+        label = { Text(label) },
+        colors = if (selected) {
+            SuggestionChipDefaults.suggestionChipColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                labelColor = MaterialTheme.colorScheme.onPrimary,
+            )
+        } else {
+            SuggestionChipDefaults.suggestionChipColors()
+        },
+    )
 }
 
 @Composable
