@@ -94,11 +94,17 @@ class GenerateViewModel @Inject constructor(
 
     fun onImageSelected(uri: Uri) {
         _selectedImageUris.value = (_selectedImageUris.value + uri).distinct().take(MAX_REFERENCE_PHOTOS)
-        _step.value = GenerateStep.STYLE
     }
 
     fun onImagesSelected(uris: List<Uri>) {
         _selectedImageUris.value = uris.distinct().take(MAX_REFERENCE_PHOTOS)
+    }
+
+    fun continueToStyle() {
+        if (_selectedImageUris.value.isEmpty()) {
+            _error.value = "Carica almeno una foto di riferimento"
+            return
+        }
         _step.value = GenerateStep.STYLE
     }
 

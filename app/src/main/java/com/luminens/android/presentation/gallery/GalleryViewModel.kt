@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.luminens.android.data.model.Photo
 import com.luminens.android.data.repository.PhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -98,12 +100,23 @@ class GalleryViewModel @Inject constructor(
     fun deleteSelectedPhotos() {
         viewModelScope.launch {
             val toDelete = _photos.value.filter { it.id in _selectedPhotoIds.value }
-            toDelete.forEach { photo ->
-                runCatching { photoRepository.deletePhoto(photo.id, photo.storagePath) }
+            val results = toDelete.map { photo ->
+                async {
+                    runCatching { photoRepository.deletePhoto(photo.id, photo.storagePath) }
+                }
+            }.awaitAll()
+
+            val failedCount = results.count { it.isFailure }
+            if (failedCount > 0) {
+                _error.value = "Eliminate ${toDelete.size - failedCount}/${toDelete.size}. Alcune foto non sono state eliminate."
             }
             clearSelection()
             loadPhotos()
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 
     fun togglePhotoPublic(photoId: String, current: Boolean) {

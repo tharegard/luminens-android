@@ -127,14 +127,14 @@ fun PrintOrderScreen(
                 address = uiState.shippingAddress,
                 modifier = Modifier.fillMaxSize().padding(padding),
                 onAddressChange = viewModel::updateAddress,
-                onProceed = { viewModel.setStep(PrintStep.PAYMENT) },
+                onProceed = viewModel::proceedToPayment,
                 isLoading = uiState.isLoading,
             )
             PrintStep.PAYMENT -> if (!uiState.checkoutUrl.isNullOrBlank()) {
                 PaymentWebView(
                     url = uiState.checkoutUrl!!,
                     modifier = Modifier.fillMaxSize().padding(padding),
-                    onSuccess = viewModel::onPaymentSuccess,
+                    onSuccess = { sessionId -> viewModel.onPaymentSuccess(sessionId) },
                     onCancel = { viewModel.setStep(PrintStep.SHIPPING) },
                 )
             } else {
@@ -372,7 +372,7 @@ private fun ShippingStep(
 private fun PaymentWebView(
     url: String,
     modifier: Modifier,
-    onSuccess: () -> Unit,
+    onSuccess: (String?) -> Unit,
     onCancel: () -> Unit,
 ) {
     AndroidView(
@@ -381,10 +381,14 @@ private fun PaymentWebView(
                 settings.javaScriptEnabled = true
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                        val u = request?.url?.toString() ?: return false
+                        val reqUri = request?.url ?: return false
+                        val u = reqUri.toString()
+                        val sessionId = reqUri.getQueryParameter("session_id")
                         return when {
-                            u.startsWith("luminens://payment/success") -> { onSuccess(); true }
+                            u.startsWith("luminens://payment/success") -> { onSuccess(sessionId); true }
                             u.startsWith("luminens://payment/cancel") -> { onCancel(); true }
+                            u.contains("/order-success") -> { onSuccess(sessionId); true }
+                            u.contains("/print-order") -> { onCancel(); true }
                             else -> false
                         }
                     }

@@ -197,6 +197,7 @@
     <string name="generate_step_upload">Carica foto</string>
     <string name="generate_step_style">Scegli stile</string>
     <string name="generate_step_settings">Impostazioni</string>
+    <string name="references_selected">%d foto selezionate</string>
     <string name="credits_available">%d crediti disponibili</string>
     <string name="buy_credits">Acquista crediti</string>
     <string name="done">Fine</string>
@@ -209,6 +210,7 @@
     <string name="editor_contrast">Contrasto</string>
     <string name="editor_saturation">Saturazione</string>
     <string name="editor_sharpen">Nitidezza</string>
+    <string name="editor_hue">Tinta</string>
     <string name="magic_ai_title">Magic AI</string>
     <string name="magic_ai_prompt_label">Prompt AI</string>
     <string name="magic_ai_generate">Genera</string>

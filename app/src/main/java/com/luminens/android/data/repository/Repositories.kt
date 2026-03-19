@@ -52,4 +52,12 @@ class OrderRepository @Inject constructor(
     private val dataSource: SupabaseDataSource,
 ) {
     suspend fun getPrintOrders() = dataSource.getPrintOrders()
+    suspend fun getPrintOrderByStripeSessionId(sessionId: String) =
+        dataSource.getPrintOrderByStripeSessionId(sessionId)
+    suspend fun createCheckoutSession(
+        items: List<com.luminens.android.data.model.CartItem>,
+        shippingAddress: com.luminens.android.data.model.ShippingAddress,
+        shipmentMethodUid: String?,
+        totalAmountEur: Double,
+    ) = dataSource.createCheckoutSession(items, shippingAddress, shipmentMethodUid, totalAmountEur)
 }

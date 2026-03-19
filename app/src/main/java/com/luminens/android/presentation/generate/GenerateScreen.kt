@@ -180,10 +180,12 @@ fun GenerateScreen(
         ) { currentStep ->
             when (currentStep) {
                 GenerateStep.UPLOAD -> UploadStep(
+                    selectedImageUris = selectedImageUris,
                     onPickImage = {
                         photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     },
                     onOpenCamera = onNavigateToCamera,
+                    onContinue = viewModel::continueToStyle,
                     credits = credits,
                     onBuyCredits = onNavigateToBuyCredits,
                 )
@@ -216,8 +218,10 @@ fun GenerateScreen(
 
 @Composable
 private fun UploadStep(
+    selectedImageUris: List<Uri>,
     onPickImage: () -> Unit,
     onOpenCamera: () -> Unit,
+    onContinue: () -> Unit,
     credits: Int,
     onBuyCredits: () -> Unit,
 ) {
@@ -256,6 +260,34 @@ private fun UploadStep(
             Icon(Icons.Default.CameraAlt, contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.take_photo))
+        }
+        if (selectedImageUris.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.references_selected, selectedImageUris.size),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(selectedImageUris, key = { it.toString() }) { uri ->
+                    Card(shape = RoundedCornerShape(10.dp)) {
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = null,
+                            modifier = Modifier.size(82.dp),
+                            contentScale = ContentScale.Crop,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            Button(
+                onClick = onContinue,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                Text(stringResource(R.string.generate_step_style))
+            }
         }
         Spacer(Modifier.height(24.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {

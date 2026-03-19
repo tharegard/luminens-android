@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.luminens.android.data.model.CartItem
 import com.luminens.android.data.model.ShipmentMethod
 import com.luminens.android.data.model.ShippingAddress
+import com.luminens.android.data.repository.OrderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -74,7 +75,9 @@ data class PrintUiState(
 )
 
 @HiltViewModel
-class CartViewModel @Inject constructor() : ViewModel() {
+class CartViewModel @Inject constructor(
+    private val orderRepository: OrderRepository,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PrintUiState())
     val uiState: StateFlow<PrintUiState> = _uiState.asStateFlow()
@@ -143,16 +146,74 @@ class CartViewModel @Inject constructor() : ViewModel() {
         _uiState.value = _uiState.value.copy(selectedShipment = method)
     }
 
-    fun setStep(step: PrintStep) { _uiState.value = _uiState.value.copy(step = step) }
+    fun setStep(step: PrintStep) {
+        _uiState.value = _uiState.value.copy(step = step)
+    }
+
+    fun proceedToPayment() {
+        val state = _uiState.value
+        if (state.cart.isEmpty()) {
+            _uiState.value = state.copy(error = "Carrello vuoto")
+            return
+        }
+        if (state.shippingAddress.firstName.isBlank() ||
+            state.shippingAddress.addressLine1.isBlank() ||
+            state.shippingAddress.city.isBlank() ||
+            state.shippingAddress.postCode.isBlank()
+        ) {
+            _uiState.value = state.copy(error = "Compila i dati di spedizione")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            runCatching {
+                orderRepository.createCheckoutSession(
+                    items = _uiState.value.cart,
+                    shippingAddress = _uiState.value.shippingAddress,
+                    shipmentMethodUid = _uiState.value.selectedShipment?.uid,
+                    totalAmountEur = _uiState.value.cart.sumOf { it.priceEur * it.quantity },
+                )
+            }.onSuccess { checkoutUrl ->
+                _uiState.value = _uiState.value.copy(
+                    checkoutUrl = checkoutUrl,
+                    step = PrintStep.PAYMENT,
+                    isLoading = false,
+                )
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = it.message ?: "Errore checkout. Riprova.",
+                )
+            }
+        }
+    }
 
     fun clearError() { _uiState.value = _uiState.value.copy(error = null) }
 
-    fun onPaymentSuccess() {
-        _uiState.value = _uiState.value.copy(
-            orderSuccess = true,
-            cart = emptyList(),
-            checkoutUrl = null,
-        )
+    fun onPaymentSuccess(stripeSessionId: String?) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            runCatching {
+                val order = stripeSessionId
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { orderRepository.getPrintOrderByStripeSessionId(it) }
+                    ?: orderRepository.getPrintOrders().firstOrNull()
+                order ?: error("Ordine non trovato nello storico")
+            }.onSuccess {
+                _uiState.value = _uiState.value.copy(
+                    orderSuccess = true,
+                    cart = emptyList(),
+                    checkoutUrl = null,
+                    isLoading = false,
+                )
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = it.message ?: "Pagamento completato ma ordine non verificato",
+                )
+            }
+        }
     }
 
     fun setCheckoutUrl(url: String) { _uiState.value = _uiState.value.copy(checkoutUrl = url) }

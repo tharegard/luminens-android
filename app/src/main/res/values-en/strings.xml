@@ -172,6 +172,7 @@
     <string name="generate_step_upload">Upload photo</string>
     <string name="generate_step_style">Choose style</string>
     <string name="generate_step_settings">Settings</string>
+    <string name="references_selected">%d selected photos</string>
     <string name="credits_available">%d credits available</string>
     <string name="buy_credits">Buy credits</string>
     <string name="done">Done</string>
@@ -184,6 +185,7 @@
     <string name="editor_contrast">Contrast</string>
     <string name="editor_saturation">Saturation</string>
     <string name="editor_sharpen">Sharpen</string>
+    <string name="editor_hue">Hue</string>
     <string name="magic_ai_title">Magic AI</string>
     <string name="magic_ai_prompt_label">AI prompt</string>
     <string name="magic_ai_generate">Generate</string>

@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.luminens.android.data.model.FilmPreset
 import com.luminens.android.data.model.FilmPresetsData
+import com.luminens.android.data.model.GrainSize
 import com.luminens.android.data.repository.GenerationRepository.PhotoCritiqueResult
 import com.luminens.android.data.repository.GenerationRepository
 import com.luminens.android.data.repository.PhotoRepository
@@ -24,6 +25,7 @@ import jp.co.cyberagent.android.gpuimage.filter.GPUImageHueFilter
 import jp.co.cyberagent.android.gpuimage.filter.GPUImageSaturationFilter
 import jp.co.cyberagent.android.gpuimage.filter.GPUImageSharpenFilter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +34,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlin.math.abs
+import kotlin.math.min
 import javax.inject.Inject
 
 data class EditorState(
@@ -44,12 +48,20 @@ data class EditorState(
     val saturation: Float = 1f,         // 0..2 (GPUImage: 0..2)
     val sharpen: Float = 0f,            // 0..4
     val hue: Float = 0f,                // 0..360
+    val sepia: Float = 0f,              // 0..1
+    val warmth: Float = 0f,             // -50..50
+    val fade: Float = 0f,               // 0..100
+    val shadows: Float = 0f,            // -25..25
+    val highlights: Float = 0f,         // -25..25
+    val grain: Float = 0f,              // 0..100
+    val grainSize: GrainSize = GrainSize.FINE,
     val currentTab: EditorTab = EditorTab.FILM,
     val magicPreviewUrl: String? = null,
     val magicError: String? = null,
     val isMagicGenerating: Boolean = false,
     val isSaving: Boolean = false,
     val saveError: String? = null,
+    val saveSuccess: String? = null,
     val isCritiqueLoading: Boolean = false,
     val critiqueResult: PhotoCritiqueResult? = null,
     val critiqueError: String? = null,
@@ -75,6 +87,7 @@ class EditorViewModel @Inject constructor(
     companion object {
         private const val MAGIC_TIMEOUT_MS = 60_000L
         private const val MAGIC_MAX_ATTEMPTS = 2
+        private const val SLIDER_DEBOUNCE_MS = 140L
     }
 
     private val _state = MutableStateFlow(EditorState())
@@ -83,6 +96,8 @@ class EditorViewModel @Inject constructor(
     // Undo stack of filter states (limited to 10 entries)
     private val history = ArrayDeque<EditorState>()
     private var redoStack = ArrayDeque<EditorState>()
+    private var rerenderJob: Job? = null
+    private var lastRenderSignature: String? = null
 
     fun loadPhoto(uri: Uri, context: Context) {
         viewModelScope.launch {
@@ -103,6 +118,7 @@ class EditorViewModel @Inject constructor(
                 originalBitmap = bitmap,
                 currentBitmap = bitmap,
             )
+            lastRenderSignature = null
             history.clear()
             redoStack.clear()
         }
@@ -112,29 +128,37 @@ class EditorViewModel @Inject constructor(
         pushHistory()
         val updated = _state.value.copy(
             selectedPreset = preset,
-            brightness = preset.brightness / 100f,
-            contrast = 1f + preset.contrast / 200f,
-            saturation = 1f + preset.saturation / 100f,
+            // CSS-like preset params are expressed as percentages where 100 is neutral.
+            brightness = (preset.brightness - 100) / 100f,
+            contrast = preset.contrast / 100f,
+            saturation = preset.saturation / 100f,
             hue = preset.hueRotate.toFloat(),
+            sepia = preset.sepia.toFloat().coerceIn(0f, 1f),
+            warmth = preset.warmth.toFloat().coerceIn(-50f, 50f),
+            fade = preset.fade.toFloat().coerceIn(0f, 100f),
+            shadows = preset.shadows.toFloat().coerceIn(-25f, 25f),
+            highlights = preset.highlights.toFloat().coerceIn(-25f, 25f),
+            grain = preset.grain.toFloat().coerceIn(0f, 100f),
+            grainSize = preset.grainSize,
         )
         _state.value = updated
-        rerender(context)
+        scheduleRerender(context)
     }
 
     fun setBrightness(v: Float, context: Context) {
-        pushHistory(); _state.value = _state.value.copy(brightness = v); rerender(context)
+        pushHistory(); _state.value = _state.value.copy(brightness = v); scheduleRerender(context, SLIDER_DEBOUNCE_MS)
     }
     fun setContrast(v: Float, context: Context) {
-        pushHistory(); _state.value = _state.value.copy(contrast = v); rerender(context)
+        pushHistory(); _state.value = _state.value.copy(contrast = v); scheduleRerender(context, SLIDER_DEBOUNCE_MS)
     }
     fun setSaturation(v: Float, context: Context) {
-        pushHistory(); _state.value = _state.value.copy(saturation = v); rerender(context)
+        pushHistory(); _state.value = _state.value.copy(saturation = v); scheduleRerender(context, SLIDER_DEBOUNCE_MS)
     }
     fun setSharpen(v: Float, context: Context) {
-        pushHistory(); _state.value = _state.value.copy(sharpen = v); rerender(context)
+        pushHistory(); _state.value = _state.value.copy(sharpen = v); scheduleRerender(context, SLIDER_DEBOUNCE_MS)
     }
     fun setHue(v: Float, context: Context) {
-        pushHistory(); _state.value = _state.value.copy(hue = v); rerender(context)
+        pushHistory(); _state.value = _state.value.copy(hue = v); scheduleRerender(context, SLIDER_DEBOUNCE_MS)
     }
 
     fun setTab(tab: EditorTab) { _state.value = _state.value.copy(currentTab = tab) }
@@ -143,20 +167,20 @@ class EditorViewModel @Inject constructor(
         if (history.isEmpty()) return
         redoStack.addFirst(_state.value)
         _state.value = history.removeLast()
-        rerender(context)
+        scheduleRerender(context)
     }
 
     fun redo(context: Context) {
         if (redoStack.isEmpty()) return
         history.addLast(_state.value)
         _state.value = redoStack.removeFirst()
-        rerender(context)
+        scheduleRerender(context)
     }
 
     fun savePhoto(photoId: String, context: Context, onSuccess: () -> Unit) {
         val bitmap = _state.value.currentBitmap ?: return
         viewModelScope.launch {
-            _state.value = _state.value.copy(isSaving = true, saveError = null)
+            _state.value = _state.value.copy(isSaving = true, saveError = null, saveSuccess = null)
             runCatching {
                 val file = withContext(Dispatchers.IO) {
                     val f = java.io.File(context.cacheDir, "edited_${System.currentTimeMillis()}.jpg")
@@ -164,10 +188,18 @@ class EditorViewModel @Inject constructor(
                     f
                 }
                 photoRepository.updatePhotoFile(photoId, file)
-            }.onSuccess { onSuccess() }
+            }.onSuccess { updated ->
+                if (updated.url.isBlank()) error("URL foto non disponibile dopo il salvataggio")
+                _state.value = _state.value.copy(saveSuccess = "Foto salvata correttamente")
+                onSuccess()
+            }
              .onFailure { _state.value = _state.value.copy(saveError = it.message) }
             _state.value = _state.value.copy(isSaving = false)
         }
+    }
+
+    fun clearSaveStatus() {
+        _state.value = _state.value.copy(saveError = null, saveSuccess = null)
     }
 
     fun generateMagicAi(prompt: String, aspectRatio: String) {
@@ -280,34 +312,70 @@ class EditorViewModel @Inject constructor(
         redoStack.clear()
     }
 
-    private fun rerender(context: Context) {
-        val stateSnapshot = _state.value
-        val original = stateSnapshot.originalUri ?: return
-        viewModelScope.launch {
-            val sourceBitmap = stateSnapshot.originalBitmap ?: withContext(Dispatchers.IO) {
-                try {
-                    val stream = when (original.scheme?.lowercase()) {
-                        "content", "file" -> context.contentResolver.openInputStream(original)
-                        else -> java.net.URL(original.toString()).openStream()
-                    }
-                    stream?.use { android.graphics.BitmapFactory.decodeStream(it) }
-                } catch (e: Exception) {
-                    null
-                }
-            } ?: return@launch
-
-            val targetState = _state.value
-            val filteredBitmap = withContext(Dispatchers.Default) {
-                runCatching { applyFilters(context, sourceBitmap, targetState) }
-                    .getOrElse { applyBasicFiltersCpu(sourceBitmap, targetState) }
-            }
-
-            _state.value = _state.value.copy(
-                originalBitmap = _state.value.originalBitmap ?: sourceBitmap,
-                currentBitmap = filteredBitmap,
-            )
+    private fun scheduleRerender(context: Context, debounceMs: Long = 0L) {
+        rerenderJob?.cancel()
+        rerenderJob = viewModelScope.launch {
+            if (debounceMs > 0L) delay(debounceMs)
+            rerender(context)
         }
     }
+
+    private suspend fun rerender(context: Context) {
+        val stateSnapshot = _state.value
+        val original = stateSnapshot.originalUri ?: return
+        val renderSignature = buildRenderSignature(stateSnapshot)
+        if (renderSignature == lastRenderSignature) return
+
+        val sourceBitmap = stateSnapshot.originalBitmap ?: withContext(Dispatchers.IO) {
+            try {
+                val stream = when (original.scheme?.lowercase()) {
+                    "content", "file" -> context.contentResolver.openInputStream(original)
+                    else -> java.net.URL(original.toString()).openStream()
+                }
+                stream?.use { android.graphics.BitmapFactory.decodeStream(it) }
+            } catch (e: Exception) {
+                null
+            }
+        } ?: return
+
+        val targetState = _state.value
+        val filteredBitmap = withContext(Dispatchers.Default) {
+            if (hasAdvancedPresetAdjustments(targetState)) {
+                applyBasicFiltersCpu(sourceBitmap, targetState)
+            } else {
+                val gpuResult = runCatching { applyFilters(context, sourceBitmap, targetState) }.getOrNull()
+                when {
+                    gpuResult == null -> applyBasicFiltersCpu(sourceBitmap, targetState)
+                    hasActiveAdjustments(targetState) && isBitmapLikelyUnchanged(sourceBitmap, gpuResult) -> {
+                        applyBasicFiltersCpu(sourceBitmap, targetState)
+                    }
+                    else -> gpuResult
+                }
+            }
+        }
+
+        lastRenderSignature = renderSignature
+        _state.value = _state.value.copy(
+            originalBitmap = _state.value.originalBitmap ?: sourceBitmap,
+            currentBitmap = filteredBitmap,
+        )
+    }
+
+    private fun buildRenderSignature(state: EditorState): String = listOf(
+        state.originalUri?.toString().orEmpty(),
+        state.brightness,
+        state.contrast,
+        state.saturation,
+        state.sharpen,
+        state.hue,
+        state.sepia,
+        state.warmth,
+        state.fade,
+        state.shadows,
+        state.highlights,
+        state.grain,
+        state.grainSize.name,
+    ).joinToString("|")
 
     private fun applyFilters(context: Context, bitmap: Bitmap, state: EditorState): Bitmap {
         val gpuImage = GPUImage(context)
@@ -340,9 +408,22 @@ class EditorViewModel @Inject constructor(
             setRotate(2, state.hue)
         }
 
-        val contrast = (state.contrast + state.sharpen.coerceIn(0f, 4f) * 0.15f).coerceIn(0f, 4.8f)
+        val warmthNorm = (state.warmth.coerceIn(-50f, 50f) / 50f)
+        val rScale = (1f + 0.10f * warmthNorm).coerceIn(0.8f, 1.2f)
+        val bScale = (1f - 0.10f * warmthNorm).coerceIn(0.8f, 1.2f)
+        val warmthMatrix = ColorMatrix(
+            floatArrayOf(
+                rScale, 0f, 0f, 0f, 0f,
+                0f, 1f, 0f, 0f, 0f,
+                0f, 0f, bScale, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f,
+            )
+        )
+
+        val fadeNorm = state.fade.coerceIn(0f, 100f) / 100f
+        val contrast = ((state.contrast + state.sharpen.coerceIn(0f, 4f) * 0.15f) * (1f - 0.35f * fadeNorm)).coerceIn(0f, 4.8f)
         val brightnessOffset = state.brightness.coerceIn(-1f, 1f) * 255f
-        val translate = 128f * (1f - contrast) + brightnessOffset
+        val translate = 128f * (1f - contrast) + brightnessOffset + (30f * fadeNorm)
         val contrastBrightnessMatrix = ColorMatrix(
             floatArrayOf(
                 contrast, 0f, 0f, 0f, translate,
@@ -352,14 +433,111 @@ class EditorViewModel @Inject constructor(
             )
         )
 
+        val sepiaAmount = state.sepia.coerceIn(0f, 1f)
+        val invSepia = 1f - sepiaAmount
+        val sepiaMatrix = ColorMatrix(
+            floatArrayOf(
+                (0.393f * sepiaAmount) + invSepia, 0.769f * sepiaAmount, 0.189f * sepiaAmount, 0f, 0f,
+                0.349f * sepiaAmount, (0.686f * sepiaAmount) + invSepia, 0.168f * sepiaAmount, 0f, 0f,
+                0.272f * sepiaAmount, 0.534f * sepiaAmount, (0.131f * sepiaAmount) + invSepia, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f,
+            )
+        )
+
         saturationMatrix.postConcat(hueMatrix)
+        saturationMatrix.postConcat(warmthMatrix)
+        saturationMatrix.postConcat(sepiaMatrix)
         saturationMatrix.postConcat(contrastBrightnessMatrix)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             colorFilter = ColorMatrixColorFilter(saturationMatrix)
         }
 
         canvas.drawBitmap(source, 0f, 0f, paint)
+
+        val shadowsNorm = state.shadows.coerceIn(-25f, 25f) / 25f
+        val highlightsNorm = state.highlights.coerceIn(-25f, 25f) / 25f
+        val grainNorm = state.grain.coerceIn(0f, 100f) / 100f
+        if (abs(shadowsNorm) > 0.001f || abs(highlightsNorm) > 0.001f || grainNorm > 0.001f) {
+            val block = when (state.grainSize) {
+                GrainSize.FINE -> 1
+                GrainSize.MEDIUM -> 2
+                GrainSize.COARSE -> 3
+            }
+            val width = out.width
+            val height = out.height
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    val c = out.getPixel(x, y)
+                    var r = (c shr 16) and 0xFF
+                    var g = (c shr 8) and 0xFF
+                    var b = c and 0xFF
+
+                    val luma = (0.299f * r + 0.587f * g + 0.114f * b) / 255f
+                    val shadowWeight = (1f - luma) * (1f - luma)
+                    val highlightWeight = luma * luma
+                    val shDelta = (shadowsNorm * 32f * shadowWeight)
+                    val hiDelta = (highlightsNorm * 32f * highlightWeight)
+
+                    r = (r + shDelta + hiDelta).toInt().coerceIn(0, 255)
+                    g = (g + shDelta + hiDelta).toInt().coerceIn(0, 255)
+                    b = (b + shDelta + hiDelta).toInt().coerceIn(0, 255)
+
+                    if (grainNorm > 0f) {
+                        val bx = x / block
+                        val by = y / block
+                        val hash = ((bx * 73856093) xor (by * 19349663)) and 0x7fffffff
+                        val noise01 = (hash % 1000) / 1000f
+                        val noise = ((noise01 * 2f) - 1f) * (18f * grainNorm)
+                        r = (r + noise).toInt().coerceIn(0, 255)
+                        g = (g + noise).toInt().coerceIn(0, 255)
+                        b = (b + noise).toInt().coerceIn(0, 255)
+                    }
+
+                    val outColor = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+                    out.setPixel(x, y, outColor)
+                }
+            }
+        }
+
         return out
+    }
+
+    private fun hasActiveAdjustments(state: EditorState): Boolean {
+        return abs(state.brightness) > 0.001f ||
+            abs(state.contrast - 1f) > 0.001f ||
+            abs(state.saturation - 1f) > 0.001f ||
+            abs(state.hue) > 0.001f ||
+            abs(state.sharpen) > 0.001f
+    }
+
+    private fun hasAdvancedPresetAdjustments(state: EditorState): Boolean {
+        return abs(state.sepia) > 0.001f ||
+            abs(state.warmth) > 0.001f ||
+            abs(state.fade) > 0.001f ||
+            abs(state.shadows) > 0.001f ||
+            abs(state.highlights) > 0.001f ||
+            abs(state.grain) > 0.001f
+    }
+
+    private fun isBitmapLikelyUnchanged(a: Bitmap, b: Bitmap): Boolean {
+        if (a.width != b.width || a.height != b.height) return false
+        if (a.sameAs(b)) return true
+
+        val w = a.width
+        val h = a.height
+        val samplePoints = arrayOf(
+            0 to 0,
+            (w / 2) to (h / 2),
+            (w - 1).coerceAtLeast(0) to (h - 1).coerceAtLeast(0),
+            (w / 3) to (h / 3),
+            ((w * 2) / 3) to ((h * 2) / 3),
+        )
+        val size = min(samplePoints.size, 5)
+        for (i in 0 until size) {
+            val (x, y) = samplePoints[i]
+            if (a.getPixel(x, y) != b.getPixel(x, y)) return false
+        }
+        return true
     }
 
     private fun bitmapToDataUrl(bitmap: Bitmap): String {

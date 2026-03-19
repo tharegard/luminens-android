@@ -103,7 +103,17 @@ fun EditorScreen(
     }
 
     LaunchedEffect(state.saveError) {
-        state.saveError?.let { snackbarHostState.showSnackbar(it) }
+        state.saveError?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearSaveStatus()
+        }
+    }
+
+    LaunchedEffect(state.saveSuccess) {
+        state.saveSuccess?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearSaveStatus()
+        }
     }
 
     LaunchedEffect(state.magicError) {
@@ -193,10 +203,12 @@ fun EditorScreen(
                         contrast = state.contrast,
                         saturation = state.saturation,
                         sharpen = state.sharpen,
+                        hue = state.hue,
                         onBrightnessChange = { viewModel.setBrightness(it, context) },
                         onContrastChange = { viewModel.setContrast(it, context) },
                         onSaturationChange = { viewModel.setSaturation(it, context) },
                         onSharpenChange = { viewModel.setSharpen(it, context) },
+                        onHueChange = { viewModel.setHue(it, context) },
                     )
                 }
             }
@@ -749,10 +761,12 @@ private fun FineTuneTab(
     contrast: Float,
     saturation: Float,
     sharpen: Float,
+    hue: Float,
     onBrightnessChange: (Float) -> Unit,
     onContrastChange: (Float) -> Unit,
     onSaturationChange: (Float) -> Unit,
     onSharpenChange: (Float) -> Unit,
+    onHueChange: (Float) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -785,6 +799,12 @@ private fun FineTuneTab(
             value = sharpen,
             range = 0f..4f,
             onValueChange = onSharpenChange,
+        )
+        SliderRow(
+            label = stringResource(R.string.editor_hue),
+            value = hue,
+            range = -180f..180f,
+            onValueChange = onHueChange,
         )
     }
 }

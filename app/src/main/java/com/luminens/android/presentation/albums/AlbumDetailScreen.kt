@@ -83,6 +83,7 @@ fun AlbumDetailScreen(
     val photos by viewModel.albumPhotos.collectAsState()
     val availablePhotos by viewModel.availablePhotos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
     val album = albums.firstOrNull { it.id == albumId }
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
@@ -99,6 +100,13 @@ fun AlbumDetailScreen(
     LaunchedEffect(albumId) {
         viewModel.loadAlbumPhotos(albumId)
         viewModel.loadAvailablePhotosForAlbum(albumId)
+    }
+
+    LaunchedEffect(error) {
+        error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
     }
 
     if (showDeleteDialog) {

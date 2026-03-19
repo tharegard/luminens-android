@@ -1,14 +1,18 @@
 package com.luminens.android.data.remote
 
 import com.luminens.android.data.model.Album
+import com.luminens.android.data.model.CartItem
 import com.luminens.android.data.model.Photo
 import com.luminens.android.data.model.PrintOrder
 import com.luminens.android.data.model.Profile
+import com.luminens.android.data.model.ShippingAddress
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -16,6 +20,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.hours
 
@@ -204,6 +215,56 @@ class SupabaseDataSource @Inject constructor(
             .decodeList<PrintOrder>()
     }
 
+    suspend fun getPrintOrderByStripeSessionId(sessionId: String): PrintOrder? = withContext(Dispatchers.IO) {
+        val uid = userId ?: return@withContext null
+        db["print_orders"]
+            .select {
+                filter {
+                    eq("user_id", uid)
+                    eq("stripe_session_id", sessionId)
+                }
+                order("created_at", Order.DESCENDING)
+            }
+            .decodeList<PrintOrder>()
+            .firstOrNull()
+    }
+
+    suspend fun createCheckoutSession(
+        items: List<CartItem>,
+        shippingAddress: ShippingAddress,
+        shipmentMethodUid: String?,
+        totalAmountEur: Double,
+    ): String = withContext(Dispatchers.IO) {
+        val body = buildJsonObject {
+            put("items", buildJsonArray {
+                items.forEach { item ->
+                    add(buildJsonObject {
+                        put("productUid", item.productUid)
+                        put("quantity", item.quantity)
+                        put("storagePath", item.storagePath)
+                        put("photoUrl", item.photoUrl)
+                    })
+                }
+            })
+            putJsonObject("shippingAddress") {
+                put("firstName", shippingAddress.firstName)
+                put("lastName", shippingAddress.lastName)
+                put("addressLine1", shippingAddress.addressLine1)
+                put("city", shippingAddress.city)
+                put("postCode", shippingAddress.postCode)
+                put("country", shippingAddress.country)
+                put("email", shippingAddress.email)
+            }
+            shipmentMethodUid?.takeIf { it.isNotBlank() }?.let { put("shipmentMethodUid", it) }
+            put("totalAmountEur", totalAmountEur)
+        }
+
+        val response = client.functions.invoke("create-checkout-session", body = body)
+        val payload = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        payload["url"]?.jsonPrimitive?.content
+            ?: throw IllegalStateException(payload["error"]?.jsonPrimitive?.content ?: "Checkout non disponibile")
+    }
+
     // ── Storage: Signed URL ──────────────────────────────────────────────────
 
     suspend fun getSignedUrl(storagePath: String): String? = withContext(Dispatchers.IO) {
@@ -224,8 +285,8 @@ class SupabaseDataSource @Inject constructor(
         storagePath
     }
 
-    /** Replace an existing photo file in Storage and update its storage_path. */
-    suspend fun updatePhotoFile(photoId: String, file: java.io.File): Unit = withContext(Dispatchers.IO) {
+    /** Replace an existing photo file in Storage and update its storage_path, then verify persisted row. */
+    suspend fun updatePhotoFile(photoId: String, file: java.io.File): Photo = withContext(Dispatchers.IO) {
         val bytes = file.readBytes()
         val currentPath = db["photos"].select { filter { eq("id", photoId) } }
             .decodeSingleOrNull<Photo>()?.storagePath
@@ -234,6 +295,16 @@ class SupabaseDataSource @Inject constructor(
         db["photos"].update(mapOf("storage_path" to path, "url" to storage["photos"].publicUrl(path))) {
             filter { eq("id", photoId) }
         }
+
+        val updated = db["photos"].select { filter { eq("id", photoId) } }
+            .decodeSingleOrNull<Photo>() ?: error("Impossibile verificare la foto salvata")
+
+        val hasPath = !updated.storagePath.isNullOrBlank()
+        val hasUrl = updated.url.isNotBlank()
+        if (!hasPath || !hasUrl) {
+            error("Salvataggio incompleto: metadati foto non aggiornati")
+        }
+        updated
     }
 
     // ── Public access (no auth required) ────────────────────────────────────
@@ -292,7 +363,8 @@ class SupabaseDataSource @Inject constructor(
         coroutineScope {
             albums.map { album ->
                 async {
-                    if (!album.coverUrl.isNullOrBlank()) return@async album
+                    val explicitCover = album.coverUrl?.takeIf { it.isNotBlank() && it.startsWith("http") }
+                    if (explicitCover != null) return@async album
 
                     val firstPhotoId = runCatching {
                         db["album_photos"]
