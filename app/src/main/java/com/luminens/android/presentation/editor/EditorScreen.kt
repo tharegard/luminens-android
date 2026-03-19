@@ -219,6 +219,7 @@ fun EditorScreen(
 
         if (magicDialogOpen) {
             MagicAiDialog(
+                currentImageModel = photoUri,
                 prompt = magicPrompt,
                 aspectRatio = aspectRatio,
                 isGenerating = state.isMagicGenerating,
@@ -482,6 +483,7 @@ private fun SmartRetouchOptionRow(
 
 @Composable
 private fun MagicAiDialog(
+    currentImageModel: String,
     prompt: String,
     aspectRatio: String,
     isGenerating: Boolean,
@@ -498,21 +500,47 @@ private fun MagicAiDialog(
         stringResource(R.string.magic_ai_feature_studio_light) to stringResource(R.string.magic_ai_feature_studio_light_prompt),
         stringResource(R.string.magic_ai_feature_enhance) to stringResource(R.string.magic_ai_feature_enhance_prompt),
         stringResource(R.string.magic_ai_feature_bokeh) to stringResource(R.string.magic_ai_feature_bokeh_prompt),
+        stringResource(R.string.magic_ai_feature_golden_hour) to stringResource(R.string.magic_ai_feature_golden_hour_prompt),
+        stringResource(R.string.magic_ai_feature_bw_cinematic) to stringResource(R.string.magic_ai_feature_bw_cinematic_prompt),
+        stringResource(R.string.magic_ai_feature_window_light) to stringResource(R.string.magic_ai_feature_window_light_prompt),
+        stringResource(R.string.magic_ai_feature_white_balance) to stringResource(R.string.magic_ai_feature_white_balance_prompt),
     )
-    val ratios = listOf("1:1", "4:5", "3:4", "9:16")
+    val suggestions = listOf(
+        stringResource(R.string.magic_ai_suggestion_remove_bg),
+        stringResource(R.string.magic_ai_suggestion_bokeh),
+        stringResource(R.string.magic_ai_suggestion_bw_cinematic),
+        stringResource(R.string.magic_ai_suggestion_window_light),
+        stringResource(R.string.magic_ai_suggestion_studio_bg),
+        stringResource(R.string.magic_ai_suggestion_golden_hour),
+    )
+    val ratios = listOf("1:1", "4:5", "5:4", "3:4", "4:3", "9:16", "16:9", "21:9")
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.magic_ai_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.magic_ai_quick_features),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(features, key = { it.first }) { (label, featurePrompt) ->
-                        OutlinedButton(onClick = { onFeaturePrompt(featurePrompt) }) {
+                        OutlinedButton(onClick = {
+                            onFeaturePrompt(featurePrompt)
+                            onGenerate()
+                        }) {
                             Text(label)
                         }
                     }
                 }
+
+                Text(
+                    text = stringResource(R.string.magic_ai_or_custom),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
 
                 OutlinedTextField(
                     value = prompt,
@@ -520,6 +548,22 @@ private fun MagicAiDialog(
                     label = { Text(stringResource(R.string.magic_ai_prompt_label)) },
                     minLines = 3,
                     modifier = Modifier.fillMaxWidth(),
+                )
+
+                if (prompt.isBlank()) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(suggestions, key = { it }) { suggestion ->
+                            OutlinedButton(onClick = { onPromptChange(suggestion) }) {
+                                Text(suggestion)
+                            }
+                        }
+                    }
+                }
+
+                Text(
+                    text = stringResource(R.string.magic_ai_output_format),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -530,13 +574,80 @@ private fun MagicAiDialog(
                     }
                 }
 
-                if (previewUrl != null) {
-                    AsyncImage(
-                        model = previewUrl,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxWidth().aspectRatio(1f),
-                        contentScale = ContentScale.Crop,
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.magic_ai_original),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        AsyncImage(
+                            model = currentImageModel,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(10.dp)),
+                            contentScale = ContentScale.Crop,
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.magic_ai_ai_preview),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            if (previewUrl != null && !isGenerating) {
+                                TextButton(onClick = onGenerate) {
+                                    Text(stringResource(R.string.magic_ai_regenerate))
+                                }
+                            }
+                        }
+
+                        if (previewUrl != null) {
+                            AsyncImage(
+                                model = previewUrl,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(10.dp)),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (isGenerating) {
+                                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Text(
+                                        stringResource(R.string.magic_ai_enter_prompt),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(8.dp),
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
