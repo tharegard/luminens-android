@@ -1,0 +1,29 @@
+# Add local.properties (contains SDK path)
+local.properties
+
+# Build outputs
+.gradle/
+build/
+app/build/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+.kotlin/
+
+# JVM heap dumps
+*.hprof
+
+# Keystore files
+*.jks
+*.keystore
+release/
+
+# Generated files
+app/src/main/assets/
+
+# Android Profiler results
+*.trace

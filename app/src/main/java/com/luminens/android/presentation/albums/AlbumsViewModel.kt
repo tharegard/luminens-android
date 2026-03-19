@@ -1,0 +1,75 @@
+package com.luminens.android.presentation.albums
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.luminens.android.data.model.Album
+import com.luminens.android.data.model.Photo
+import com.luminens.android.data.repository.AlbumRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class AlbumsViewModel @Inject constructor(
+    private val albumRepository: AlbumRepository,
+) : ViewModel() {
+
+    private val _albums = MutableStateFlow<List<Album>>(emptyList())
+    val albums: StateFlow<List<Album>> = _albums.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    // Album detail state
+    private val _albumPhotos = MutableStateFlow<List<Photo>>(emptyList())
+    val albumPhotos: StateFlow<List<Photo>> = _albumPhotos.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    init { loadAlbums() }
+
+    fun loadAlbums() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            runCatching { albumRepository.getAlbums() }
+                .onSuccess { _albums.value = it }
+                .onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun loadAlbumPhotos(albumId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            runCatching { albumRepository.getAlbumPhotos(albumId) }
+                .onSuccess { _albumPhotos.value = it }
+                .onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun createAlbum(name: String) {
+        viewModelScope.launch {
+            runCatching { albumRepository.createAlbum(name) }
+                .onSuccess { loadAlbums() }
+        }
+    }
+
+    fun deleteAlbum(albumId: String) {
+        viewModelScope.launch {
+            runCatching { albumRepository.deleteAlbum(albumId) }
+                .onSuccess { loadAlbums() }
+        }
+    }
+
+    fun toggleAlbumPublic(albumId: String, currentValue: Boolean) {
+        viewModelScope.launch {
+            runCatching { albumRepository.updateAlbumPublic(albumId, !currentValue) }
+                .onSuccess { loadAlbums() }
+        }
+    }
+}

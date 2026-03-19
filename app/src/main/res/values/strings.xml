@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Luminens</string>
+
+    <!-- Auth -->
+    <string name="sign_in">Accedi</string>
+    <string name="sign_up">Registrati</string>
+    <string name="sign_out">Esci</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Conferma password</string>
+    <string name="display_name">Nome visualizzato</string>
+    <string name="continue_with_google">Continua con Google</string>
+    <string name="no_account">Non hai un account? Registrati</string>
+    <string name="have_account">Hai già un account? Accedi</string>
+    <string name="forgot_password">Password dimenticata?</string>
+
+    <!-- Navigation -->
+    <string name="nav_gallery">Galleria</string>
+    <string name="nav_generate">Genera</string>
+    <string name="nav_albums">Album</string>
+    <string name="nav_account">Account</string>
+
+    <!-- Gallery -->
+    <string name="gallery_empty">Nessuna foto ancora.\nGenera la tua prima foto!</string>
+    <string name="delete_photo">Elimina foto</string>
+    <string name="delete_photo_confirm">Eliminare questa foto? L\'azione non è reversibile.</string>
+    <string name="share_photo">Condividi foto</string>
+    <string name="edit_photo">Modifica</string>
+    <string name="open_in_editor">Apri nell\'editor</string>
+    <string name="add_to_album">Aggiungi ad album</string>
+    <string name="download">Scarica</string>
+
+    <!-- Albums -->
+    <string name="albums_empty">Nessun album.\nCrea il tuo primo album!</string>
+    <string name="create_album">Crea album</string>
+    <string name="album_name">Nome album</string>
+    <string name="delete_album">Elimina album</string>
+    <string name="delete_album_confirm">Eliminare questo album? Le foto non verranno eliminate.</string>
+    <string name="share_album">Condividi album</string>
+    <string name="album_public">Album pubblico</string>
+    <string name="album_private">Album privato</string>
+    <string name="add_photos">Aggiungi foto</string>
+    <string name="remove_from_album">Rimuovi dall\'album</string>
+    <string name="photos_count">%d foto</string>
+
+    <!-- Generate -->
+    <string name="generate_title">Genera foto</string>
+    <string name="select_photos">Seleziona foto</string>
+    <string name="take_photo">Scatta foto</string>
+    <string name="select_style">Scegli stile</string>
+    <string name="select_setting">Scegli ambientazione</string>
+    <string name="select_aspect_ratio">Formato</string>
+    <string name="select_resolution">Risoluzione</string>
+    <string name="shot_count">Numero di foto</string>
+    <string name="enhance_prompt">Migliora prompt</string>
+    <string name="generate_button">Genera %d foto</string>
+    <string name="generating">Generazione in corso…</string>
+    <string name="generation_progress">%d / %d foto</string>
+    <string name="generation_complete">Generazione completata!</string>
+    <string name="save_to_gallery">Salva in galleria</string>
+    <string name="create_album_from">Crea album</string>
+    <string name="not_enough_credits">Crediti insufficienti</string>
+    <string name="upgrade_plan">Aggiorna piano</string>
+    <string name="add_reference_photos">Aggiungi foto di riferimento (max 4)</string>
+    <string name="custom_prompt_hint">Personalizza il prompt (opzionale)…</string>
+
+    <!-- Styles -->
+    <string name="style_natural">Natural</string>
+    <string name="style_editorial">Editorial</string>
+    <string name="style_modern_lifestyle">Modern Lifestyle</string>
+    <string name="style_minimalist">Minimalist</string>
+    <string name="style_glamour">Glamour</string>
+    <string name="style_vintage">Vintage</string>
+    <string name="style_linkedin_pro">LinkedIn Pro</string>
+    <string name="style_linkedin_banner">LinkedIn Banner</string>
+    <string name="style_executive_portrait">Executive Portrait</string>
+    <string name="style_minimalist_tech">Minimalist Tech</string>
+    <string name="style_high_end_beauty">High-End Beauty</string>
+    <string name="style_cinematic">Cinematic</string>
+    <string name="style_artistic">Artistic</string>
+    <string name="style_ansel_adams">Ansel Adams</string>
+    <string name="style_annie_leibovitz">Annie Leibovitz</string>
+    <string name="style_helmut_newton">Helmut Newton</string>
+    <string name="style_peter_lindbergh">Peter Lindbergh</string>
+    <string name="style_martin_schoeller">Martin Schoeller</string>
+    <string name="style_steve_mccurry">Steve McCurry</string>
+    <string name="style_wes_anderson">Wes Anderson</string>
+    <string name="style_kids_studio">Kids Studio</string>
+    <string name="style_school_day">School Day</string>
+
+    <!-- Camera -->
+    <string name="camera_title">Fotocamera</string>
+    <string name="switch_camera">Cambia fotocamera</string>
+    <string name="flash_auto">Flash auto</string>
+    <string name="flash_on">Flash attivo</string>
+    <string name="flash_off">Flash spento</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Editor</string>
+    <string name="tab_film">Film</string>
+    <string name="tab_fine_tune">Regolazioni</string>
+    <string name="undo">Annulla</string>
+    <string name="redo">Ripristina</string>
+    <string name="save">Salva</string>
+    <string name="crop">Ritaglia</string>
+    <string name="brightness">Luminosità</string>
+    <string name="contrast">Contrasto</string>
+    <string name="saturation">Saturazione</string>
+    <string name="warmth">Calore</string>
+    <string name="fade">Fade</string>
+    <string name="grain">Grana</string>
+    <string name="intensity">Intensità preset</string>
+    <string name="saving">Salvataggio…</string>
+    <string name="saved">Foto salvata!</string>
+
+    <!-- Print / Cart -->
+    <string name="cart">Carrello</string>
+    <string name="cart_empty">Il carrello è vuoto</string>
+    <string name="print_order_title">Ordina stampa</string>
+    <string name="select_product">Scegli prodotto</string>
+    <string name="select_size">Dimensione</string>
+    <string name="shipping_address">Indirizzo di spedizione</string>
+    <string name="first_name">Nome</string>
+    <string name="last_name">Cognome</string>
+    <string name="address_line1">Indirizzo</string>
+    <string name="city">Città</string>
+    <string name="postal_code">CAP</string>
+    <string name="country">Paese</string>
+    <string name="select_shipping">Metodo di spedizione</string>
+    <string name="proceed_to_payment">Procedi al pagamento</string>
+    <string name="order_summary">Riepilogo ordine</string>
+    <string name="subtotal">Subtotale</string>
+    <string name="shipping_cost">Spedizione</string>
+    <string name="total">Totale</string>
+    <string name="order_success_title">Ordine confermato!</string>
+    <string name="order_success_msg">Il tuo ordine è stato ricevuto. Riceverai una email di conferma.</string>
+    <string name="back_to_gallery">Torna alla galleria</string>
+    <string name="add_to_cart">Aggiungi al carrello</string>
+    <string name="quantity">Quantità</string>
+    <string name="fit">Adatta</string>
+    <string name="fill">Riempi</string>
+
+    <!-- Account -->
+    <string name="account_title">Account</string>
+    <string name="plan_free">Free</string>
+    <string name="plan_starter">Starter</string>
+    <string name="plan_pro">Pro</string>
+    <string name="plan_editor">Editor Pass</string>
+    <string name="credits_remaining">%d crediti rimanenti</string>
+    <string name="credits_of">di %d mensili</string>
+    <string name="manage_subscription">Gestisci abbonamento</string>
+    <string name="upgrade_to_pro">Passa a Pro</string>
+    <string name="delete_account">Elimina account</string>
+    <string name="delete_account_confirm">Eliminare l\'account? Tutti i dati verranno eliminati definitivamente.</string>
+    <string name="order_history">Storico ordini</string>
+
+    <!-- Shared / Public -->
+    <string name="shared_by">Condiviso da Luminens</string>
+    <string name="join_luminens">Prova Luminens gratis</string>
+    <string name="photo_not_found">Foto non trovata o non pubblica.</string>
+    <string name="album_not_found">Album non trovato o non pubblico.</string>
+
+    <!-- Common -->
+    <string name="cancel">Annulla</string>
+    <string name="confirm">Conferma</string>
+    <string name="delete">Elimina</string>
+    <string name="loading">Caricamento…</string>
+    <string name="error_generic">Qualcosa è andato storto. Riprova.</string>
+    <string name="retry">Riprova</string>
+    <string name="ok">OK</string>
+    <string name="premium_badge">Premium</string>
+    <string name="free_badge">Free</string>
+    <string name="copy_link">Copia link</string>
+    <string name="link_copied">Link copiato!</string>
+
+    <!-- Generate screen -->
+    <string name="generate_subtitle">Carica una foto di riferimento e scegli lo stile</string>
+    <string name="pick_from_gallery">Scegli dalla galleria</string>
+    <string name="choose_style">Scegli uno stile</string>
+    <string name="prompt_label">Descrizione personalizzata (opzionale)</string>
+    <string name="num_shots_label">%d foto</string>
+    <string name="generating_wait">Generazione in corso…\nPotrebbe richiedere 1-2 minuti.</string>
+    <string name="generate_results">Risultati</string>
+    <string name="generate_step_upload">Carica foto</string>
+    <string name="generate_step_style">Scegli stile</string>
+    <string name="generate_step_settings">Impostazioni</string>
+    <string name="credits_available">%d crediti disponibili</string>
+    <string name="buy_credits">Acquista crediti</string>
+    <string name="done">Fine</string>
+    <string name="edit">Modifica</string>
+
+    <!-- Editor -->
+    <string name="editor_tab_film">Film</string>
+    <string name="editor_tab_finetune">Fine Tune</string>
+    <string name="editor_brightness">Luminosità</string>
+    <string name="editor_contrast">Contrasto</string>
+    <string name="editor_saturation">Saturazione</string>
+    <string name="editor_sharpen">Nitidezza</string>
+
+    <!-- Print -->
+    <string name="print_title">Stampa foto</string>
+    <string name="print_cart">Carrello</string>
+    <string name="print_shipping">Spedizione</string>
+    <string name="print_payment">Pagamento</string>
+    <string name="print_quote">Preventivo</string>
+    <string name="full_name">Nome completo</string>
+    <string name="country_code">Codice paese (es. IT)</string>
+    <string name="proceed_to_shipping">Procedi alla spedizione</string>
+    <string name="shipping_info">Indirizzo di spedizione</string>
+    <string name="order_success">Ordine confermato!</string>
+
+    <!-- Shared / CTA -->
+    <string name="shared_album_cta_title">Scopri le foto generate con Luminens AI</string>
+    <string name="shared_photo_cta_title">Questa foto è stata generata con Luminens AI</string>
+    <string name="shared_try_free">Prova Luminens gratis</string>
+</resources>

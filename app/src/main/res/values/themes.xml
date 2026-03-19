@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base theme (no ActionBar, MaterialComponents) -->
+    <style name="Theme.Luminens" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/surface_dark</item>
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Splash theme (shows immediately while Compose loads) -->
+    <style name="Theme.Luminens.Splash" parent="Theme.Luminens">
+        <item name="android:windowBackground">@color/surface_dark</item>
+    </style>
+
+    <!-- uCrop theme -->
+    <style name="Theme.UCrop" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorPrimaryDark">@color/brand_primary_dark</item>
+        <item name="colorAccent">@color/brand_accent</item>
+        <item name="android:windowBackground">@color/surface_dark</item>
+    </style>
+</resources>

@@ -1,0 +1,82 @@
+package com.luminens.android.presentation.gallery
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.luminens.android.data.model.Photo
+import com.luminens.android.data.repository.PhotoRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class GalleryViewModel @Inject constructor(
+    private val photoRepository: PhotoRepository,
+) : ViewModel() {
+
+    private val _photos = MutableStateFlow<List<Photo>>(emptyList())
+    val photos: StateFlow<List<Photo>> = _photos.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _selectedPhotoIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedPhotoIds: StateFlow<Set<String>> = _selectedPhotoIds.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    val isSelectionMode get() = _selectedPhotoIds.value.isNotEmpty()
+
+    init {
+        loadPhotos()
+    }
+
+    fun loadPhotos() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            runCatching { photoRepository.getPhotos() }
+                .onSuccess { _photos.value = it }
+                .onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun toggleSelection(photoId: String) {
+        _selectedPhotoIds.value = _selectedPhotoIds.value.toMutableSet().apply {
+            if (contains(photoId)) remove(photoId) else add(photoId)
+        }
+    }
+
+    fun clearSelection() {
+        _selectedPhotoIds.value = emptySet()
+    }
+
+    fun deletePhoto(photoId: String, storagePath: String?) {
+        viewModelScope.launch {
+            runCatching { photoRepository.deletePhoto(photoId, storagePath) }
+                .onSuccess { loadPhotos() }
+                .onFailure { _error.value = it.message }
+        }
+    }
+
+    fun deleteSelectedPhotos() {
+        viewModelScope.launch {
+            val toDelete = _photos.value.filter { it.id in _selectedPhotoIds.value }
+            toDelete.forEach { photo ->
+                runCatching { photoRepository.deletePhoto(photo.id, photo.storagePath) }
+            }
+            clearSelection()
+            loadPhotos()
+        }
+    }
+
+    fun togglePhotoPublic(photoId: String, current: Boolean) {
+        viewModelScope.launch {
+            runCatching { photoRepository.updatePhotoPublic(photoId, !current) }
+                .onSuccess { loadPhotos() }
+        }
+    }
+}

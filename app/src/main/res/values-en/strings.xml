@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Luminens</string>
+
+    <!-- Auth -->
+    <string name="sign_in">Sign in</string>
+    <string name="sign_up">Sign up</string>
+    <string name="sign_out">Sign out</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="display_name">Display name</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="no_account">No account? Sign up</string>
+    <string name="have_account">Already have an account? Sign in</string>
+    <string name="forgot_password">Forgot password?</string>
+
+    <!-- Navigation -->
+    <string name="nav_gallery">Gallery</string>
+    <string name="nav_generate">Generate</string>
+    <string name="nav_albums">Albums</string>
+    <string name="nav_account">Account</string>
+
+    <!-- Gallery -->
+    <string name="gallery_empty">No photos yet.\nGenerate your first photo!</string>
+    <string name="delete_photo">Delete photo</string>
+    <string name="delete_photo_confirm">Delete this photo? This action cannot be undone.</string>
+    <string name="share_photo">Share photo</string>
+    <string name="edit_photo">Edit</string>
+    <string name="open_in_editor">Open in editor</string>
+    <string name="add_to_album">Add to album</string>
+    <string name="download">Download</string>
+
+    <!-- Albums -->
+    <string name="albums_empty">No albums.\nCreate your first album!</string>
+    <string name="create_album">Create album</string>
+    <string name="album_name">Album name</string>
+    <string name="delete_album">Delete album</string>
+    <string name="delete_album_confirm">Delete this album? Photos will not be deleted.</string>
+    <string name="share_album">Share album</string>
+    <string name="album_public">Public album</string>
+    <string name="album_private">Private album</string>
+    <string name="add_photos">Add photos</string>
+    <string name="remove_from_album">Remove from album</string>
+    <string name="photos_count">%d photos</string>
+
+    <!-- Generate -->
+    <string name="generate_title">Generate photos</string>
+    <string name="select_photos">Select photos</string>
+    <string name="take_photo">Take photo</string>
+    <string name="select_style">Choose style</string>
+    <string name="select_setting">Choose setting</string>
+    <string name="select_aspect_ratio">Aspect ratio</string>
+    <string name="select_resolution">Resolution</string>
+    <string name="shot_count">Number of photos</string>
+    <string name="enhance_prompt">Enhance prompt</string>
+    <string name="generate_button">Generate %d photos</string>
+    <string name="generating">Generating…</string>
+    <string name="generation_progress">%d / %d photos</string>
+    <string name="generation_complete">Generation complete!</string>
+    <string name="save_to_gallery">Save to gallery</string>
+    <string name="create_album_from">Create album</string>
+    <string name="not_enough_credits">Not enough credits</string>
+    <string name="upgrade_plan">Upgrade plan</string>
+    <string name="add_reference_photos">Add reference photos (max 4)</string>
+    <string name="custom_prompt_hint">Customize prompt (optional)…</string>
+
+    <!-- Camera -->
+    <string name="camera_title">Camera</string>
+    <string name="switch_camera">Switch camera</string>
+    <string name="flash_auto">Flash auto</string>
+    <string name="flash_on">Flash on</string>
+    <string name="flash_off">Flash off</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Editor</string>
+    <string name="tab_film">Film</string>
+    <string name="tab_fine_tune">Fine Tune</string>
+    <string name="undo">Undo</string>
+    <string name="redo">Redo</string>
+    <string name="save">Save</string>
+    <string name="crop">Crop</string>
+    <string name="brightness">Brightness</string>
+    <string name="contrast">Contrast</string>
+    <string name="saturation">Saturation</string>
+    <string name="warmth">Warmth</string>
+    <string name="fade">Fade</string>
+    <string name="grain">Grain</string>
+    <string name="intensity">Preset intensity</string>
+    <string name="saving">Saving…</string>
+    <string name="saved">Photo saved!</string>
+
+    <!-- Print / Cart -->
+    <string name="cart">Cart</string>
+    <string name="cart_empty">Your cart is empty</string>
+    <string name="print_order_title">Order print</string>
+    <string name="select_product">Choose product</string>
+    <string name="select_size">Size</string>
+    <string name="shipping_address">Shipping address</string>
+    <string name="first_name">First name</string>
+    <string name="last_name">Last name</string>
+    <string name="address_line1">Address</string>
+    <string name="city">City</string>
+    <string name="postal_code">Postal code</string>
+    <string name="country">Country</string>
+    <string name="select_shipping">Shipping method</string>
+    <string name="proceed_to_payment">Proceed to payment</string>
+    <string name="order_summary">Order summary</string>
+    <string name="subtotal">Subtotal</string>
+    <string name="shipping_cost">Shipping</string>
+    <string name="total">Total</string>
+    <string name="order_success_title">Order confirmed!</string>
+    <string name="order_success_msg">Your order has been received. You\'ll receive a confirmation email.</string>
+    <string name="back_to_gallery">Back to gallery</string>
+    <string name="add_to_cart">Add to cart</string>
+    <string name="quantity">Quantity</string>
+    <string name="fit">Fit</string>
+    <string name="fill">Fill</string>
+
+    <!-- Account -->
+    <string name="account_title">Account</string>
+    <string name="plan_free">Free</string>
+    <string name="plan_starter">Starter</string>
+    <string name="plan_pro">Pro</string>
+    <string name="plan_editor">Editor Pass</string>
+    <string name="credits_remaining">%d credits remaining</string>
+    <string name="credits_of">of %d monthly</string>
+    <string name="manage_subscription">Manage subscription</string>
+    <string name="upgrade_to_pro">Upgrade to Pro</string>
+    <string name="delete_account">Delete account</string>
+    <string name="delete_account_confirm">Delete account? All data will be permanently deleted.</string>
+    <string name="order_history">Order history</string>
+
+    <!-- Shared / Public -->
+    <string name="shared_by">Shared via Luminens</string>
+    <string name="join_luminens">Try Luminens for free</string>
+    <string name="photo_not_found">Photo not found or not public.</string>
+    <string name="album_not_found">Album not found or not public.</string>
+
+    <!-- Common -->
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="delete">Delete</string>
+    <string name="loading">Loading…</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="retry">Retry</string>
+    <string name="ok">OK</string>
+    <string name="premium_badge">Premium</string>
+    <string name="free_badge">Free</string>
+    <string name="copy_link">Copy link</string>
+    <string name="link_copied">Link copied!</string>
+    <!-- Generate screen -->
+    <string name="generate_subtitle">Upload a reference photo and choose a style</string>
+    <string name="pick_from_gallery">Pick from gallery</string>
+    <string name="choose_style">Choose a style</string>
+    <string name="prompt_label">Custom prompt (optional)</string>
+    <string name="num_shots_label">%d photos</string>
+    <string name="generating_wait">Generating\u2026\nThis may take 1-2 minutes.</string>
+    <string name="generate_results">Results</string>
+    <string name="generate_step_upload">Upload photo</string>
+    <string name="generate_step_style">Choose style</string>
+    <string name="generate_step_settings">Settings</string>
+    <string name="credits_available">%d credits available</string>
+    <string name="buy_credits">Buy credits</string>
+    <string name="done">Done</string>
+    <string name="edit">Edit</string>
+
+    <!-- Editor -->
+    <string name="editor_tab_film">Film</string>
+    <string name="editor_tab_finetune">Fine Tune</string>
+    <string name="editor_brightness">Brightness</string>
+    <string name="editor_contrast">Contrast</string>
+    <string name="editor_saturation">Saturation</string>
+    <string name="editor_sharpen">Sharpen</string>
+
+    <!-- Print -->
+    <string name="print_title">Print photo</string>
+    <string name="print_cart">Cart</string>
+    <string name="print_shipping">Shipping</string>
+    <string name="print_payment">Payment</string>
+    <string name="print_quote">Quote</string>
+    <string name="full_name">Full name</string>
+    <string name="country_code">Country code (e.g. US)</string>
+    <string name="proceed_to_shipping">Proceed to shipping</string>
+    <string name="shipping_info">Shipping address</string>
+    <string name="order_success">Order confirmed!</string>
+
+    <!-- Shared / CTA -->
+    <string name="shared_album_cta_title">Discover photos generated with Luminens AI</string>
+    <string name="shared_photo_cta_title">This photo was generated with Luminens AI</string>
+    <string name="shared_try_free">Try Luminens for free</string>
+</resources>
