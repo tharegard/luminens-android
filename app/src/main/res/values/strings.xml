@@ -204,6 +204,11 @@
     <string name="print_shipping">Spedizione</string>
     <string name="print_payment">Pagamento</string>
     <string name="print_quote">Preventivo</string>
+    <string name="print_crop_preview">Anteprima ritaglio</string>
+    <string name="print_choose_product_hint">Scegli un prodotto per iniziare il tuo ordine.</string>
+    <string name="print_category_photo_prints">Foto</string>
+    <string name="print_category_canvas">Canvas</string>
+    <string name="print_category_frames">Cornici</string>
     <string name="full_name">Nome completo</string>
     <string name="country_code">Codice paese (es. IT)</string>
     <string name="proceed_to_shipping">Procedi alla spedizione</string>

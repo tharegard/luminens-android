@@ -7,13 +7,16 @@ import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -23,11 +26,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -62,6 +67,7 @@ fun PrintOrderScreen(
     viewModel: CartViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val products = remember(uiState.productCategory) { viewModel.availableProducts() }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.error) {
@@ -80,6 +86,7 @@ fun PrintOrderScreen(
                     Text(
                         when (uiState.step) {
                             PrintStep.PRODUCT -> stringResource(R.string.print_cart)
+                            PrintStep.CROP_PREVIEW -> stringResource(R.string.print_crop_preview)
                             PrintStep.SHIPPING -> stringResource(R.string.print_shipping)
                             PrintStep.QUOTE -> stringResource(R.string.print_quote)
                             PrintStep.PAYMENT -> stringResource(R.string.print_payment)
@@ -101,9 +108,19 @@ fun PrintOrderScreen(
         when (uiState.step) {
             PrintStep.PRODUCT -> CartStep(
                 cart = uiState.cart,
+                products = products,
+                selectedCategory = uiState.productCategory,
                 modifier = Modifier.fillMaxSize().padding(padding),
+                onCategoryChange = viewModel::setProductCategory,
+                onAddProduct = viewModel::addProductToCart,
                 onQuantityChange = viewModel::updateQuantity,
                 onRemoveItem = viewModel::removeItem,
+                onProceed = { viewModel.setStep(PrintStep.CROP_PREVIEW) },
+            )
+            PrintStep.CROP_PREVIEW -> CropPreviewStep(
+                cart = uiState.cart,
+                modifier = Modifier.fillMaxSize().padding(padding),
+                onFitModeChange = viewModel::updateFitMode,
                 onProceed = { viewModel.setStep(PrintStep.SHIPPING) },
             )
             PrintStep.SHIPPING -> ShippingStep(
@@ -133,15 +150,26 @@ fun PrintOrderScreen(
 @Composable
 private fun CartStep(
     cart: List<CartItem>,
+    products: List<PrintProduct>,
+    selectedCategory: PrintProductCategory,
     modifier: Modifier,
+    onCategoryChange: (PrintProductCategory) -> Unit,
+    onAddProduct: (PrintProduct) -> Unit,
     onQuantityChange: (String, Int) -> Unit,
     onRemoveItem: (String) -> Unit,
     onProceed: () -> Unit,
 ) {
     Column(modifier = modifier) {
+        ProductPickerSection(
+            selectedCategory = selectedCategory,
+            products = products,
+            onCategoryChange = onCategoryChange,
+            onAddProduct = onAddProduct,
+        )
+
         if (cart.isEmpty()) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.cart_empty))
+                Text(stringResource(R.string.print_choose_product_hint))
             }
         } else {
             LazyColumn(
@@ -162,6 +190,53 @@ private fun CartStep(
                 modifier = Modifier.fillMaxWidth().padding(16.dp).height(52.dp),
                 enabled = cart.isNotEmpty(),
             ) { Text(stringResource(R.string.proceed_to_shipping)) }
+        }
+    }
+}
+
+@Composable
+private fun ProductPickerSection(
+    selectedCategory: PrintProductCategory,
+    products: List<PrintProduct>,
+    onCategoryChange: (PrintProductCategory) -> Unit,
+    onAddProduct: (PrintProduct) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(stringResource(R.string.select_product), style = MaterialTheme.typography.titleMedium)
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { onCategoryChange(PrintProductCategory.PHOTO_PRINTS) }) {
+                Text(stringResource(R.string.print_category_photo_prints))
+            }
+            OutlinedButton(onClick = { onCategoryChange(PrintProductCategory.CANVAS) }) {
+                Text(stringResource(R.string.print_category_canvas))
+            }
+            OutlinedButton(onClick = { onCategoryChange(PrintProductCategory.FRAMES) }) {
+                Text(stringResource(R.string.print_category_frames))
+            }
+        }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(vertical = 4.dp),
+        ) {
+            items(products, key = { it.id }) { product ->
+                Card(modifier = Modifier.fillParentMaxWidth(0.7f)) {
+                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AsyncImage(
+                            model = product.previewUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxWidth().aspectRatio(4f / 5f),
+                            contentScale = ContentScale.Crop,
+                        )
+                        Text(product.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text("EUR ${product.priceEur}", style = MaterialTheme.typography.bodySmall)
+                        Button(onClick = { onAddProduct(product) }, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.add_to_cart))
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -195,6 +270,48 @@ private fun CartItemRow(
             IconButton(onClick = onQtyIncrease, modifier = Modifier.size(32.dp)) {
                 Icon(Icons.Default.Add, contentDescription = "Add")
             }
+        }
+    }
+}
+
+@Composable
+private fun CropPreviewStep(
+    cart: List<CartItem>,
+    modifier: Modifier,
+    onFitModeChange: (itemId: String, fitMode: String) -> Unit,
+    onProceed: () -> Unit,
+) {
+    val firstItem = cart.firstOrNull()
+    Column(
+        modifier = modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(stringResource(R.string.print_crop_preview), style = MaterialTheme.typography.titleMedium)
+        if (firstItem == null) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.cart_empty))
+            }
+            return
+        }
+
+        AsyncImage(
+            model = firstItem.photoUrl,
+            contentDescription = null,
+            modifier = Modifier.fillMaxWidth().aspectRatio(4f / 5f),
+            contentScale = if (firstItem.fitMode == "fit") ContentScale.Fit else ContentScale.Crop,
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { onFitModeChange(firstItem.id, "fit") }) {
+                Text(stringResource(R.string.fit))
+            }
+            OutlinedButton(onClick = { onFitModeChange(firstItem.id, "fill") }) {
+                Text(stringResource(R.string.fill))
+            }
+        }
+
+        Button(onClick = onProceed, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+            Text(stringResource(R.string.proceed_to_shipping))
         }
     }
 }

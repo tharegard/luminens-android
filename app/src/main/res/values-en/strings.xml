@@ -179,6 +179,11 @@
     <string name="print_shipping">Shipping</string>
     <string name="print_payment">Payment</string>
     <string name="print_quote">Quote</string>
+    <string name="print_crop_preview">Crop preview</string>
+    <string name="print_choose_product_hint">Choose a product to start your order.</string>
+    <string name="print_category_photo_prints">Photos</string>
+    <string name="print_category_canvas">Canvas</string>
+    <string name="print_category_frames">Frames</string>
     <string name="full_name">Full name</string>
     <string name="country_code">Country code (e.g. US)</string>
     <string name="proceed_to_shipping">Proceed to shipping</string>
