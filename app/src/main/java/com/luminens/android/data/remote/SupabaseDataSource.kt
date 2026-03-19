@@ -89,12 +89,13 @@ class SupabaseDataSource @Inject constructor(
 
     suspend fun getAlbums(): List<Album> = withContext(Dispatchers.IO) {
         val uid = userId ?: return@withContext emptyList()
-        db["albums"]
+        val albums = db["albums"]
             .select {
                 filter { eq("user_id", uid) }
                 order("created_at", Order.DESCENDING)
             }
             .decodeList<Album>()
+        resolveAlbumCoverUrls(albums)
     }
 
     suspend fun getAlbumPhotos(albumId: String): List<Photo> = withContext(Dispatchers.IO) {
@@ -275,6 +276,41 @@ class SupabaseDataSource @Inject constructor(
                         }.getOrNull()
                     }
                     if (signedUrl != null) photo.copy(url = signedUrl) else photo
+                }
+            }.awaitAll()
+        }
+
+    /**
+     * Some albums have no explicit cover_url. In that case, use the first
+     * photo in album_photos (ordered by sort_order) as a visual fallback.
+     */
+    private suspend fun resolveAlbumCoverUrls(albums: List<Album>): List<Album> =
+        coroutineScope {
+            albums.map { album ->
+                async {
+                    if (!album.coverUrl.isNullOrBlank()) return@async album
+
+                    val firstPhotoId = runCatching {
+                        db["album_photos"]
+                            .select {
+                                filter { eq("album_id", album.id) }
+                                order("sort_order", Order.ASCENDING)
+                            }
+                            .decodeList<AlbumPhotoJoin>()
+                            .firstOrNull()
+                            ?.photoId
+                    }.getOrNull() ?: return@async album
+
+                    val firstPhoto = runCatching {
+                        db["photos"]
+                            .select { filter { eq("id", firstPhotoId) } }
+                            .decodeList<Photo>()
+                            .firstOrNull()
+                    }.getOrNull() ?: return@async album
+
+                    val resolved = resolveSignedUrls(listOf(firstPhoto)).firstOrNull()
+                    val coverUrl = resolved?.url ?: firstPhoto.url
+                    if (coverUrl.isBlank()) album else album.copy(coverUrl = coverUrl)
                 }
             }.awaitAll()
         }

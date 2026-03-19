@@ -65,10 +65,15 @@ fun PhotoViewerScreen(
     val context = LocalContext.current
     val photos by viewModel.photos.collectAsState()
     val pagerState = rememberPagerState(initialPage = 0) { photos.size }
-    LaunchedEffect(photos.isNotEmpty()) {
+    LaunchedEffect(initialPhotoId, photos) {
         if (photos.isNotEmpty()) {
-            val idx = photos.indexOfFirst { it.id == initialPhotoId }.coerceAtLeast(0)
-            pagerState.scrollToPage(idx)
+            viewModel.ensureCategoryForPhoto(initialPhotoId)
+            val idx = photos.indexOfFirst { it.id == initialPhotoId }
+            if (idx >= 0 && idx != pagerState.currentPage) {
+                pagerState.scrollToPage(idx)
+            }
+        } else {
+            viewModel.ensureCategoryForPhoto(initialPhotoId)
         }
     }
     val currentPhoto = if (photos.isNotEmpty()) photos.getOrNull(pagerState.currentPage) else null

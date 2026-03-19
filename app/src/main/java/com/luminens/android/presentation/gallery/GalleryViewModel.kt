@@ -63,6 +63,20 @@ class GalleryViewModel @Inject constructor(
         applyCategoryFilter()
     }
 
+    fun ensureCategoryForPhoto(photoId: String) {
+        if (photoId.isBlank()) return
+        if (_photos.value.any { it.id == photoId }) return
+
+        val target = allPhotos.firstOrNull { it.id == photoId } ?: return
+        val targetCategory = target.positionData?.category
+        val nextCategory = if (targetCategory == CATEGORY_KIDS) CATEGORY_KIDS else CATEGORY_ADULTS
+
+        if (_selectedCategory.value != nextCategory) {
+            _selectedCategory.value = nextCategory
+            applyCategoryFilter()
+        }
+    }
+
     fun toggleSelection(photoId: String) {
         _selectedPhotoIds.value = _selectedPhotoIds.value.toMutableSet().apply {
             if (contains(photoId)) remove(photoId) else add(photoId)
