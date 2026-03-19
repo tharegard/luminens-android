@@ -12,10 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
@@ -27,6 +31,7 @@ import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.appcompat.app.AppCompatDelegate
@@ -47,6 +54,10 @@ import com.luminens.android.presentation.theme.PlanEditorColor
 import com.luminens.android.presentation.theme.PlanFreeColor
 import com.luminens.android.presentation.theme.PlanProColor
 import com.luminens.android.presentation.theme.PlanStarterColor
+import com.luminens.android.presentation.theme.OnSurfaceVariant
+import com.luminens.android.presentation.theme.SurfaceBorder
+import com.luminens.android.presentation.theme.SurfaceCard
+import com.luminens.android.presentation.theme.SurfaceElevated
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +92,29 @@ fun AccountScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.account_title)) }) }
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        buildAnnotatedString {
+                            pushStyle(SpanStyle(color = Color.White))
+                            append("Lumi")
+                            pop()
+                            pushStyle(SpanStyle(color = MaterialTheme.colorScheme.primary))
+                            append("nens")
+                            pop()
+                            pushStyle(SpanStyle(color = OnSurfaceVariant))
+                            append("  •  ")
+                            append(stringResource(R.string.account_title))
+                            pop()
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceElevated),
+            )
+        },
     ) { padding ->
         if (isLoading && profile == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -102,7 +135,13 @@ fun AccountScreen(
 
             profile?.let { p ->
                 // Language selector
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, SurfaceBorder.copy(alpha = 0.7f), RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceCard),
+                ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -152,7 +191,13 @@ fun AccountScreen(
                 }
 
                 // Plan card
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, SurfaceBorder.copy(alpha = 0.7f), RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceCard),
+                ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -202,6 +247,8 @@ fun AccountScreen(
                     OutlinedButton(
                         onClick = onManageSubscription,
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, SurfaceBorder),
                     ) {
                         Text(stringResource(R.string.manage_subscription))
                     }
@@ -209,6 +256,7 @@ fun AccountScreen(
                     Button(
                         onClick = onManageSubscription,
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
                     ) {
                         Text(stringResource(R.string.upgrade_to_pro))
                     }
@@ -218,6 +266,8 @@ fun AccountScreen(
                 OutlinedButton(
                     onClick = onPrintOrder,
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, SurfaceBorder),
                 ) {
                     Text(stringResource(R.string.print_order_title))
                 }
@@ -226,6 +276,8 @@ fun AccountScreen(
                 OutlinedButton(
                     onClick = onOrderHistory,
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, SurfaceBorder),
                 ) {
                     Text(stringResource(R.string.order_history))
                 }
@@ -236,6 +288,8 @@ fun AccountScreen(
                 OutlinedButton(
                     onClick = { showSignOutDialog = true },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.45f)),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.error,
                     ),
@@ -260,11 +314,14 @@ private fun LanguageOptionChip(
         label = { Text(label) },
         colors = if (selected) {
             SuggestionChipDefaults.suggestionChipColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                labelColor = MaterialTheme.colorScheme.onPrimary,
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                labelColor = Color.White,
             )
         } else {
-            SuggestionChipDefaults.suggestionChipColors()
+            SuggestionChipDefaults.suggestionChipColors(
+                containerColor = SurfaceElevated,
+                labelColor = OnSurfaceVariant,
+            )
         },
     )
 }
