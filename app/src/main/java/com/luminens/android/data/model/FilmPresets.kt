@@ -109,29 +109,31 @@ data class PhotoStyle(
 enum class StyleCategory { ADULTS, KIDS }
 
 object PhotoStylesData {
+    private fun preview(id: String): String = "https://luminens.com/landing/previews/$id.jpg"
+
     val all = listOf(
-        PhotoStyle("natural", "Natural", StyleCategory.ADULTS, false),
-        PhotoStyle("editorial", "Editorial", StyleCategory.ADULTS, false),
-        PhotoStyle("modern-lifestyle", "Modern Lifestyle", StyleCategory.ADULTS, false),
-        PhotoStyle("minimalist", "Minimalist", StyleCategory.ADULTS, false),
-        PhotoStyle("glamour", "Glamour", StyleCategory.ADULTS, false),
-        PhotoStyle("vintage", "Vintage", StyleCategory.ADULTS, false),
-        PhotoStyle("linkedin-pro", "LinkedIn Pro", StyleCategory.ADULTS, true),
-        PhotoStyle("linkedin-banner", "LinkedIn Banner", StyleCategory.ADULTS, true),
-        PhotoStyle("executive-portrait", "Executive Portrait", StyleCategory.ADULTS, true),
-        PhotoStyle("minimalist-tech", "Minimalist Tech", StyleCategory.ADULTS, true),
-        PhotoStyle("high-end-beauty", "High-End Beauty", StyleCategory.ADULTS, true),
-        PhotoStyle("cinematic", "Cinematic", StyleCategory.ADULTS, true),
-        PhotoStyle("artistic", "Artistic", StyleCategory.ADULTS, true),
-        PhotoStyle("ansel-adams", "Ansel Adams", StyleCategory.ADULTS, true),
-        PhotoStyle("annie-leibovitz", "Annie Leibovitz", StyleCategory.ADULTS, true),
-        PhotoStyle("helmut-newton", "Helmut Newton", StyleCategory.ADULTS, true),
-        PhotoStyle("peter-lindbergh", "Peter Lindbergh", StyleCategory.ADULTS, true),
-        PhotoStyle("martin-schoeller", "Martin Schoeller", StyleCategory.ADULTS, true),
-        PhotoStyle("steve-mccurry", "Steve McCurry", StyleCategory.ADULTS, true),
-        PhotoStyle("wes-anderson", "Wes Anderson", StyleCategory.ADULTS, true),
-        PhotoStyle("kids-studio", "Kids Studio", StyleCategory.KIDS, false),
-        PhotoStyle("school-day", "School Day", StyleCategory.KIDS, false),
+        PhotoStyle("natural", "Natural", StyleCategory.ADULTS, false, previewUrl = preview("natural")),
+        PhotoStyle("editorial", "Editorial", StyleCategory.ADULTS, false, previewUrl = preview("editorial")),
+        PhotoStyle("modern-lifestyle", "Modern Lifestyle", StyleCategory.ADULTS, false, previewUrl = preview("modern-lifestyle")),
+        PhotoStyle("minimalist", "Minimalist", StyleCategory.ADULTS, false, previewUrl = preview("minimalist")),
+        PhotoStyle("glamour", "Glamour", StyleCategory.ADULTS, false, previewUrl = preview("glamour")),
+        PhotoStyle("vintage", "Vintage", StyleCategory.ADULTS, false, previewUrl = preview("vintage")),
+        PhotoStyle("linkedin-pro", "LinkedIn Pro", StyleCategory.ADULTS, true, previewUrl = preview("linkedin-pro")),
+        PhotoStyle("linkedin-banner", "LinkedIn Banner", StyleCategory.ADULTS, true, previewUrl = preview("linkedin-banner")),
+        PhotoStyle("executive-portrait", "Executive Portrait", StyleCategory.ADULTS, true, previewUrl = preview("executive-portrait")),
+        PhotoStyle("minimalist-tech", "Minimalist Tech", StyleCategory.ADULTS, true, previewUrl = preview("minimalist-tech")),
+        PhotoStyle("high-end-beauty", "High-End Beauty", StyleCategory.ADULTS, true, previewUrl = preview("high-end-beauty")),
+        PhotoStyle("cinematic", "Cinematic", StyleCategory.ADULTS, true, previewUrl = preview("cinematic")),
+        PhotoStyle("artistic", "Artistic", StyleCategory.ADULTS, true, previewUrl = preview("artistic")),
+        PhotoStyle("ansel-adams", "Ansel Adams", StyleCategory.ADULTS, true, previewUrl = preview("ansel-adams")),
+        PhotoStyle("annie-leibovitz", "Annie Leibovitz", StyleCategory.ADULTS, true, previewUrl = preview("annie-leibovitz")),
+        PhotoStyle("helmut-newton", "Helmut Newton", StyleCategory.ADULTS, true, previewUrl = preview("helmut-newton")),
+        PhotoStyle("peter-lindbergh", "Peter Lindbergh", StyleCategory.ADULTS, true, previewUrl = preview("peter-lindbergh")),
+        PhotoStyle("martin-schoeller", "Martin Schoeller", StyleCategory.ADULTS, true, previewUrl = preview("martin-schoeller")),
+        PhotoStyle("steve-mccurry", "Steve McCurry", StyleCategory.ADULTS, true, previewUrl = preview("steve-mccurry")),
+        PhotoStyle("wes-anderson", "Wes Anderson", StyleCategory.ADULTS, true, previewUrl = preview("wes-anderson")),
+        PhotoStyle("kids-studio", "Kids Studio", StyleCategory.KIDS, false, previewUrl = preview("kids-studio")),
+        PhotoStyle("school-day", "School Day", StyleCategory.KIDS, false, previewUrl = preview("school-day")),
     )
 }
 

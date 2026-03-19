@@ -58,7 +58,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -257,6 +259,9 @@ private fun StyleStep(onStyleSelected: (com.luminens.android.data.model.PhotoSty
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(styles, key = { it.id }) { style ->
+                var useFallback by remember(style.id) { mutableStateOf(false) }
+                val fallbackUrl = remember(style.id) { "https://picsum.photos/seed/luminens-${style.id}/800/1000" }
+                val model = if (useFallback) fallbackUrl else (style.previewUrl ?: fallbackUrl)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -265,14 +270,15 @@ private fun StyleStep(onStyleSelected: (com.luminens.android.data.model.PhotoSty
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        if (!style.previewUrl.isNullOrBlank()) {
-                            AsyncImage(
-                                model = style.previewUrl,
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop,
-                            )
-                        }
+                        AsyncImage(
+                            model = model,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                            onError = {
+                                if (!useFallback) useFallback = true
+                            },
+                        )
                         Box(
                             modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth()
                                 .padding(8.dp),
