@@ -3,10 +3,12 @@ package com.luminens.android.presentation.editor
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.luminens.android.data.model.FilmPreset
 import com.luminens.android.data.model.FilmPresetsData
+import com.luminens.android.data.repository.GenerationRepository
 import com.luminens.android.data.repository.PhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jp.co.cyberagent.android.gpuimage.GPUImage
@@ -34,6 +36,9 @@ data class EditorState(
     val sharpen: Float = 0f,            // 0..4
     val hue: Float = 0f,                // 0..360
     val currentTab: EditorTab = EditorTab.FILM,
+    val magicPreviewUrl: String? = null,
+    val magicError: String? = null,
+    val isMagicGenerating: Boolean = false,
     val isSaving: Boolean = false,
     val saveError: String? = null,
 )
@@ -43,6 +48,7 @@ enum class EditorTab { FILM, FINE_TUNE }
 @HiltViewModel
 class EditorViewModel @Inject constructor(
     private val photoRepository: PhotoRepository,
+    private val generationRepository: GenerationRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EditorState())
@@ -137,6 +143,42 @@ class EditorViewModel @Inject constructor(
         }
     }
 
+    fun generateMagicAi(prompt: String, aspectRatio: String) {
+        val bitmap = _state.value.currentBitmap ?: return
+        if (prompt.isBlank()) {
+            _state.value = _state.value.copy(magicError = "Prompt required")
+            return
+        }
+
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isMagicGenerating = true, magicError = null, magicPreviewUrl = null)
+            runCatching {
+                val imageDataUrl = withContext(Dispatchers.Default) {
+                    bitmapToDataUrl(bitmap)
+                }
+                generationRepository.editWithAi(
+                    prompt = prompt,
+                    aspectRatio = aspectRatio,
+                    imageDataUrl = imageDataUrl,
+                )
+            }.onSuccess { editedUrl ->
+                _state.value = _state.value.copy(magicPreviewUrl = editedUrl)
+            }.onFailure {
+                _state.value = _state.value.copy(magicError = it.message)
+            }
+            _state.value = _state.value.copy(isMagicGenerating = false)
+        }
+    }
+
+    fun applyMagicPreview(context: Context) {
+        val preview = _state.value.magicPreviewUrl ?: return
+        loadPhoto(Uri.parse(preview), context)
+    }
+
+    fun clearMagicState() {
+        _state.value = _state.value.copy(magicPreviewUrl = null, magicError = null, isMagicGenerating = false)
+    }
+
     private fun pushHistory() {
         if (history.size >= 10) history.removeFirst()
         history.addLast(_state.value)
@@ -178,5 +220,13 @@ class EditorViewModel @Inject constructor(
         )
         gpuImage.setFilter(filters)
         return gpuImage.bitmapWithFilterApplied
+    }
+
+    private fun bitmapToDataUrl(bitmap: Bitmap): String {
+        val out = java.io.ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 92, out)
+        val bytes = out.toByteArray()
+        val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+        return "data:image/jpeg;base64,$base64"
     }
 }

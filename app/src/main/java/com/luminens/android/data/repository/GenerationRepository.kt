@@ -116,4 +116,29 @@ class GenerationRepository @Inject constructor(
             ).decodeSingle<Map<String, JsonElement>>()
             result["id"]?.jsonPrimitive?.content ?: ""
         }
+
+    /**
+     * Call edit-with-ai edge function and return edited image URL.
+     */
+    suspend fun editWithAi(
+        prompt: String,
+        aspectRatio: String,
+        imageDataUrl: String? = null,
+        imageUrl: String? = null,
+    ): String = withContext(Dispatchers.IO) {
+        val body = buildJsonObject {
+            put("prompt", prompt)
+            put("aspectRatio", aspectRatio)
+            imageDataUrl?.let { put("imageDataUrl", it) }
+            imageUrl?.let { put("imageUrl", it) }
+        }
+        val response = functions.invoke("edit-with-ai", body = body)
+        val json = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val backendError = json["error"]?.jsonPrimitive?.contentOrNull
+        if (!backendError.isNullOrBlank()) {
+            throw IllegalStateException(backendError)
+        }
+        json["editedImageUrl"]?.jsonPrimitive?.content
+            ?: throw IllegalStateException("No edited image returned")
+    }
 }

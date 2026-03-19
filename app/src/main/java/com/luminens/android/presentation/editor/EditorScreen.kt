@@ -29,12 +29,16 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Redo
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
@@ -42,13 +46,16 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,6 +85,9 @@ fun EditorScreen(
     val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var magicDialogOpen by remember { mutableStateOf(false) }
+    var magicPrompt by remember { mutableStateOf("") }
+    var aspectRatio by remember { mutableStateOf("1:1") }
 
     LaunchedEffect(photoUri) {
         val uri = Uri.parse(photoUri)
@@ -86,6 +96,10 @@ fun EditorScreen(
 
     LaunchedEffect(state.saveError) {
         state.saveError?.let { snackbarHostState.showSnackbar(it) }
+    }
+
+    LaunchedEffect(state.magicError) {
+        state.magicError?.let { snackbarHostState.showSnackbar(it) }
     }
 
     Scaffold(
@@ -99,6 +113,9 @@ fun EditorScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { magicDialogOpen = true }) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = stringResource(R.string.magic_ai_title))
+                    }
                     IconButton(onClick = { viewModel.undo(context) }) {
                         Icon(Icons.Default.Undo, contentDescription = stringResource(R.string.undo))
                     }
@@ -178,7 +195,112 @@ fun EditorScreen(
                 )
             } ?: CircularProgressIndicator()
         }
+
+        if (magicDialogOpen) {
+            MagicAiDialog(
+                prompt = magicPrompt,
+                aspectRatio = aspectRatio,
+                isGenerating = state.isMagicGenerating,
+                previewUrl = state.magicPreviewUrl,
+                onPromptChange = { magicPrompt = it },
+                onAspectRatioChange = { aspectRatio = it },
+                onGenerate = { viewModel.generateMagicAi(magicPrompt, aspectRatio) },
+                onApply = {
+                    viewModel.applyMagicPreview(context)
+                    viewModel.clearMagicState()
+                    magicDialogOpen = false
+                },
+                onDismiss = {
+                    viewModel.clearMagicState()
+                    magicDialogOpen = false
+                },
+                onFeaturePrompt = { magicPrompt = it },
+            )
+        }
     }
+}
+
+@Composable
+private fun MagicAiDialog(
+    prompt: String,
+    aspectRatio: String,
+    isGenerating: Boolean,
+    previewUrl: String?,
+    onPromptChange: (String) -> Unit,
+    onAspectRatioChange: (String) -> Unit,
+    onGenerate: () -> Unit,
+    onApply: () -> Unit,
+    onDismiss: () -> Unit,
+    onFeaturePrompt: (String) -> Unit,
+) {
+    val features = listOf(
+        "remove_bg" to "Remove background and keep subject clean",
+        "studio_light" to "Add soft studio lighting and subtle shadows",
+        "enhance" to "Enhance clarity and details while preserving identity",
+        "bokeh" to "Create natural background blur and depth",
+    )
+    val ratios = listOf("1:1", "4:5", "3:4", "9:16")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.magic_ai_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(features, key = { it.first }) { feature ->
+                        OutlinedButton(onClick = { onFeaturePrompt(feature.second) }) {
+                            Text(feature.first)
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = prompt,
+                    onValueChange = onPromptChange,
+                    label = { Text(stringResource(R.string.magic_ai_prompt_label)) },
+                    minLines = 3,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(ratios, key = { it }) { ratio ->
+                        OutlinedButton(onClick = { onAspectRatioChange(ratio) }) {
+                            Text(if (aspectRatio == ratio) "* $ratio" else ratio)
+                        }
+                    }
+                }
+
+                if (previewUrl != null) {
+                    AsyncImage(
+                        model = previewUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (previewUrl == null) {
+                Button(onClick = onGenerate, enabled = !isGenerating && prompt.isNotBlank()) {
+                    if (isGenerating) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.magic_ai_generate))
+                    }
+                }
+            } else {
+                Button(onClick = onApply) {
+                    Text(stringResource(R.string.magic_ai_apply))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable

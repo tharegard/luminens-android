@@ -177,6 +177,10 @@
     <string name="editor_contrast">Contrast</string>
     <string name="editor_saturation">Saturation</string>
     <string name="editor_sharpen">Sharpen</string>
+    <string name="magic_ai_title">Magic AI</string>
+    <string name="magic_ai_prompt_label">AI prompt</string>
+    <string name="magic_ai_generate">Generate</string>
+    <string name="magic_ai_apply">Apply</string>
 
     <!-- Print -->
     <string name="print_title">Print photo</string>
