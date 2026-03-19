@@ -127,6 +127,7 @@ class GenerationRepository @Inject constructor(
         aspectRatio: String,
         imageDataUrl: String? = null,
         imageUrl: String? = null,
+        functionName: String = "edit-with-ai",
     ): String = withContext(Dispatchers.IO) {
         val body = buildJsonObject {
             put("prompt", prompt)
@@ -134,7 +135,7 @@ class GenerationRepository @Inject constructor(
             imageDataUrl?.let { put("imageDataUrl", it) }
             imageUrl?.let { put("imageUrl", it) }
         }
-        val response = functions.invoke("edit-with-ai", body = body)
+        val response = functions.invoke(functionName, body = body)
         val json = Json.parseToJsonElement(response.bodyAsText()).jsonObject
         val backendError = json["error"]?.jsonPrimitive?.contentOrNull
         val refusal = json["refusal"]?.jsonPrimitive?.booleanOrNull ?: false

@@ -219,6 +219,16 @@
     <string name="magic_ai_feature_bokeh">Bokeh naturale</string>
     <string name="magic_ai_feature_bokeh_prompt">Crea sfocatura naturale dello sfondo e maggiore profondita</string>
     <string name="magic_ai_timeout_error">Magic AI in timeout. Riprova tra poco.</string>
+    <string name="smart_retouch_title">Smart Retouch</string>
+    <string name="smart_retouch_description">Ritocco automatico professionale mantenendo identita e posa del soggetto.</string>
+    <string name="smart_retouch_restore_old">Restauro foto datata</string>
+    <string name="smart_retouch_enhance_lighting">Illuminazione professionale</string>
+    <string name="smart_retouch_keep_background">Mantieni sfondo originale</string>
+    <string name="smart_retouch_clean_background">Pulisci sfondo originale</string>
+    <string name="smart_retouch_neutral_background">Sostituisci con sfondo neutro</string>
+    <string name="smart_retouch_blur_background">Sfoca sfondo (bokeh)</string>
+    <string name="smart_retouch_generate">Applica ritocco</string>
+    <string name="smart_retouch_apply">Applica e continua</string>
 
     <!-- Print -->
     <string name="print_title">Stampa foto</string>

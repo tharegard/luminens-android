@@ -194,6 +194,16 @@
     <string name="magic_ai_feature_bokeh">Natural bokeh</string>
     <string name="magic_ai_feature_bokeh_prompt">Create natural background blur and stronger depth</string>
     <string name="magic_ai_timeout_error">Magic AI timed out. Please retry shortly.</string>
+    <string name="smart_retouch_title">Smart Retouch</string>
+    <string name="smart_retouch_description">Professional automatic retouch while preserving subject identity and pose.</string>
+    <string name="smart_retouch_restore_old">Restore old photo</string>
+    <string name="smart_retouch_enhance_lighting">Professional lighting</string>
+    <string name="smart_retouch_keep_background">Keep original background</string>
+    <string name="smart_retouch_clean_background">Clean original background</string>
+    <string name="smart_retouch_neutral_background">Replace with neutral background</string>
+    <string name="smart_retouch_blur_background">Blur background (bokeh)</string>
+    <string name="smart_retouch_generate">Apply retouch</string>
+    <string name="smart_retouch_apply">Apply and continue</string>
 
     <!-- Print -->
     <string name="print_title">Print photo</string>

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -44,6 +45,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -87,6 +89,7 @@ fun EditorScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var magicDialogOpen by remember { mutableStateOf(false) }
+    var smartRetouchDialogOpen by remember { mutableStateOf(false) }
     var magicPrompt by remember { mutableStateOf("") }
     var aspectRatio by remember { mutableStateOf("1:1") }
 
@@ -114,6 +117,9 @@ fun EditorScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { smartRetouchDialogOpen = true }) {
+                        Icon(Icons.Default.AutoFixHigh, contentDescription = stringResource(R.string.smart_retouch_title))
+                    }
                     IconButton(onClick = { magicDialogOpen = true }) {
                         Icon(Icons.Default.AutoAwesome, contentDescription = stringResource(R.string.magic_ai_title))
                     }
@@ -218,6 +224,148 @@ fun EditorScreen(
                 onFeaturePrompt = { magicPrompt = it },
             )
         }
+
+        if (smartRetouchDialogOpen) {
+            SmartRetouchDialog(
+                isGenerating = state.isMagicGenerating,
+                previewUrl = state.magicPreviewUrl,
+                onGenerate = viewModel::generateSmartRetouch,
+                onApply = {
+                    viewModel.applyMagicPreview(context)
+                    viewModel.clearMagicState()
+                    smartRetouchDialogOpen = false
+                },
+                onDismiss = {
+                    viewModel.clearMagicState()
+                    smartRetouchDialogOpen = false
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SmartRetouchDialog(
+    isGenerating: Boolean,
+    previewUrl: String?,
+    onGenerate: (SmartRetouchOptions) -> Unit,
+    onApply: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var options by remember { mutableStateOf(SmartRetouchOptions()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.smart_retouch_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.smart_retouch_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                SmartRetouchOptionRow(
+                    label = stringResource(R.string.smart_retouch_restore_old),
+                    checked = options.restoreOldPhoto,
+                    onCheckedChange = { options = options.copy(restoreOldPhoto = it) },
+                )
+                SmartRetouchOptionRow(
+                    label = stringResource(R.string.smart_retouch_enhance_lighting),
+                    checked = options.enhanceLighting,
+                    onCheckedChange = { options = options.copy(enhanceLighting = it) },
+                )
+                SmartRetouchOptionRow(
+                    label = stringResource(R.string.smart_retouch_keep_background),
+                    checked = options.keepOriginal,
+                    onCheckedChange = {
+                        options = options.copy(
+                            keepOriginal = it,
+                            neutralBackground = if (it) false else options.neutralBackground,
+                            blurBackground = if (it) false else options.blurBackground,
+                        )
+                    },
+                )
+
+                if (options.keepOriginal) {
+                    SmartRetouchOptionRow(
+                        label = stringResource(R.string.smart_retouch_clean_background),
+                        checked = options.cleanBackground,
+                        onCheckedChange = { options = options.copy(cleanBackground = it) },
+                    )
+                } else {
+                    SmartRetouchOptionRow(
+                        label = stringResource(R.string.smart_retouch_neutral_background),
+                        checked = options.neutralBackground,
+                        onCheckedChange = {
+                            options = options.copy(neutralBackground = it, blurBackground = if (it) false else options.blurBackground)
+                        },
+                    )
+                    SmartRetouchOptionRow(
+                        label = stringResource(R.string.smart_retouch_blur_background),
+                        checked = options.blurBackground,
+                        onCheckedChange = {
+                            options = options.copy(blurBackground = it, neutralBackground = if (it) false else options.neutralBackground)
+                        },
+                    )
+                }
+
+                if (previewUrl != null) {
+                    AsyncImage(
+                        model = previewUrl,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(10.dp)),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (previewUrl == null) {
+                Button(onClick = { onGenerate(options) }, enabled = !isGenerating) {
+                    if (isGenerating) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.smart_retouch_generate))
+                    }
+                }
+            } else {
+                Button(onClick = onApply, enabled = !isGenerating) {
+                    Text(stringResource(R.string.smart_retouch_apply))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isGenerating) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun SmartRetouchOptionRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(start = 6.dp),
+        )
     }
 }
 

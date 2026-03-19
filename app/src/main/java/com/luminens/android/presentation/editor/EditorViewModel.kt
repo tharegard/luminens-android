@@ -48,6 +48,15 @@ data class EditorState(
 
 enum class EditorTab { FILM, FINE_TUNE }
 
+data class SmartRetouchOptions(
+    val enhanceLighting: Boolean = true,
+    val cleanBackground: Boolean = false,
+    val blurBackground: Boolean = false,
+    val neutralBackground: Boolean = false,
+    val keepOriginal: Boolean = true,
+    val restoreOldPhoto: Boolean = false,
+)
+
 @HiltViewModel
 class EditorViewModel @Inject constructor(
     private val photoRepository: PhotoRepository,
@@ -181,6 +190,38 @@ class EditorViewModel @Inject constructor(
         }
     }
 
+    fun generateSmartRetouch(options: SmartRetouchOptions, aspectRatio: String = "1:1") {
+        val bitmap = _state.value.currentBitmap ?: return
+
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isMagicGenerating = true, magicError = null, magicPreviewUrl = null)
+            runCatching {
+                val imageDataUrl = withContext(Dispatchers.Default) {
+                    bitmapToDataUrl(bitmap)
+                }
+                val prompt = buildSmartRetouchPrompt(options)
+                requestMagicAiWithRetry(
+                    prompt = prompt,
+                    aspectRatio = aspectRatio,
+                    imageDataUrl = imageDataUrl,
+                    functionName = if (options.restoreOldPhoto) "restore-photo" else "edit-with-ai",
+                )
+            }.onSuccess { editedUrl ->
+                _state.value = _state.value.copy(magicPreviewUrl = editedUrl)
+            }.onFailure {
+                val raw = it.message.orEmpty()
+                val message = when {
+                    it is TimeoutCancellationException -> "Smart Retouch in timeout. Riprova tra poco."
+                    raw.startsWith("REFUSAL:") -> raw.removePrefix("REFUSAL:").trim()
+                    raw.isNotBlank() -> raw
+                    else -> "Errore Smart Retouch"
+                }
+                _state.value = _state.value.copy(magicError = message)
+            }
+            _state.value = _state.value.copy(isMagicGenerating = false)
+        }
+    }
+
     fun applyMagicPreview(context: Context) {
         val preview = _state.value.magicPreviewUrl ?: return
         loadPhoto(Uri.parse(preview), context)
@@ -245,6 +286,7 @@ class EditorViewModel @Inject constructor(
         prompt: String,
         aspectRatio: String,
         imageDataUrl: String,
+        functionName: String = "edit-with-ai",
     ): String {
         var lastError: Throwable? = null
         repeat(MAGIC_MAX_ATTEMPTS) { attempt ->
@@ -254,6 +296,7 @@ class EditorViewModel @Inject constructor(
                         prompt = prompt,
                         aspectRatio = aspectRatio,
                         imageDataUrl = imageDataUrl,
+                        functionName = functionName,
                     )
                 }
             } catch (e: Throwable) {
@@ -264,5 +307,33 @@ class EditorViewModel @Inject constructor(
             }
         }
         throw (lastError ?: IllegalStateException("Magic AI request failed"))
+    }
+
+    private fun buildSmartRetouchPrompt(options: SmartRetouchOptions): String {
+        val promptParts = mutableListOf(
+            "Agisci come un ritoccatore fotografico professionista di alta moda.",
+            "Migliora questa foto mantenendo identita, posa ed espressione del soggetto.",
+        )
+
+        if (options.restoreOldPhoto) {
+            promptParts += "Ripristina foto datata: rimuovi graffi, polvere e pieghe; migliora nitidezza e dettagli del volto; ricostruisci colori realistici se sbiaditi."
+        }
+        if (options.enhanceLighting) {
+            promptParts += "Applica una luce professionale morbida da studio e migliora bilanciamento del bianco e contrasto."
+        }
+
+        if (options.keepOriginal) {
+            if (options.cleanBackground) {
+                promptParts += "Mantieni lo sfondo originale ma puliscilo da elementi di disturbo."
+            } else {
+                promptParts += "Mantieni lo sfondo originale."
+            }
+        } else if (options.neutralBackground) {
+            promptParts += "Sostituisci lo sfondo con uno sfondo neutro da studio, pulito e minimale."
+        } else if (options.blurBackground) {
+            promptParts += "Mantieni lo sfondo originale ma applica un bokeh naturale per enfatizzare il soggetto."
+        }
+
+        return promptParts.joinToString(" ")
     }
 }
