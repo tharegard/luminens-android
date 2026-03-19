@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -26,6 +27,19 @@ class GenerationRepository @Inject constructor(
 ) {
     private val storage get() = client.storage
     private val functions get() = client.functions
+
+    data class CritiqueCategory(
+        val name: String,
+        val score: Int,
+        val comment: String,
+        val advice: String,
+    )
+
+    data class PhotoCritiqueResult(
+        val overallScore: Int,
+        val categories: List<CritiqueCategory>,
+        val topAdvice: List<String>,
+    )
 
     /**
      * Upload a photo file to Supabase Storage.
@@ -147,5 +161,47 @@ class GenerationRepository @Inject constructor(
         }
         json["editedImageUrl"]?.jsonPrimitive?.content
             ?: throw IllegalStateException("No edited image returned")
+    }
+
+    suspend fun critiquePhoto(
+        imageDataUrl: String? = null,
+        imageUrl: String? = null,
+    ): PhotoCritiqueResult = withContext(Dispatchers.IO) {
+        val body = buildJsonObject {
+            imageDataUrl?.let { put("imageDataUrl", it) }
+            imageUrl?.let { put("imageUrl", it) }
+        }
+        val response = functions.invoke("critique-photo", body = body)
+        val json = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+
+        val backendError = json["error"]?.jsonPrimitive?.contentOrNull
+        if (!backendError.isNullOrBlank()) {
+            throw IllegalStateException(backendError)
+        }
+
+        val categories = json["categories"]
+            ?.jsonArray
+            ?.mapNotNull { item ->
+                val obj = item.jsonObject
+                val name = obj["name"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+                val score = obj["score"]?.jsonPrimitive?.intOrNull ?: 0
+                val comment = obj["comment"]?.jsonPrimitive?.contentOrNull.orEmpty()
+                val advice = obj["advice"]?.jsonPrimitive?.contentOrNull.orEmpty()
+                CritiqueCategory(name = name, score = score, comment = comment, advice = advice)
+            }
+            .orEmpty()
+
+        val topAdvice = json["top_advice"]
+            ?.jsonArray
+            ?.mapNotNull { it.jsonPrimitive.contentOrNull }
+            .orEmpty()
+
+        val overallScore = json["overall_score"]?.jsonPrimitive?.intOrNull ?: 0
+
+        PhotoCritiqueResult(
+            overallScore = overallScore,
+            categories = categories,
+            topAdvice = topAdvice,
+        )
     }
 }

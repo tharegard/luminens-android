@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.luminens.android.data.model.FilmPreset
 import com.luminens.android.data.model.FilmPresetsData
+import com.luminens.android.data.repository.GenerationRepository.PhotoCritiqueResult
 import com.luminens.android.data.repository.GenerationRepository
 import com.luminens.android.data.repository.PhotoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,6 +45,9 @@ data class EditorState(
     val isMagicGenerating: Boolean = false,
     val isSaving: Boolean = false,
     val saveError: String? = null,
+    val isCritiqueLoading: Boolean = false,
+    val critiqueResult: PhotoCritiqueResult? = null,
+    val critiqueError: String? = null,
 )
 
 enum class EditorTab { FILM, FINE_TUNE }
@@ -225,6 +229,39 @@ class EditorViewModel @Inject constructor(
     fun applyMagicPreview(context: Context) {
         val preview = _state.value.magicPreviewUrl ?: return
         loadPhoto(Uri.parse(preview), context)
+    }
+
+    fun analyzePhotoCritique() {
+        val bitmap = _state.value.currentBitmap ?: return
+
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                isCritiqueLoading = true,
+                critiqueError = null,
+                critiqueResult = null,
+            )
+            runCatching {
+                val imageDataUrl = withContext(Dispatchers.Default) {
+                    bitmapToDataUrl(bitmap)
+                }
+                generationRepository.critiquePhoto(imageDataUrl = imageDataUrl)
+            }.onSuccess { result ->
+                _state.value = _state.value.copy(critiqueResult = result)
+            }.onFailure {
+                _state.value = _state.value.copy(
+                    critiqueError = it.message ?: "Errore analisi foto",
+                )
+            }
+            _state.value = _state.value.copy(isCritiqueLoading = false)
+        }
+    }
+
+    fun clearCritique() {
+        _state.value = _state.value.copy(
+            isCritiqueLoading = false,
+            critiqueError = null,
+            critiqueResult = null,
+        )
     }
 
     fun clearMagicState() {

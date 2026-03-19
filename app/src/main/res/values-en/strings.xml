@@ -204,6 +204,11 @@
     <string name="smart_retouch_blur_background">Blur background (bokeh)</string>
     <string name="smart_retouch_generate">Apply retouch</string>
     <string name="smart_retouch_apply">Apply and continue</string>
+    <string name="photo_critique_title">Photo Critique</string>
+    <string name="photo_critique_analyzing">AI analysis in progress…</string>
+    <string name="photo_critique_overall">Overall score: %1$d/10</string>
+    <string name="photo_critique_category_score">%1$s: %2$d/10</string>
+    <string name="photo_critique_top_advice">Top advice</string>
 
     <!-- Print -->
     <string name="print_title">Print photo</string>

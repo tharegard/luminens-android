@@ -32,12 +32,14 @@ import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -75,6 +77,7 @@ import coil3.compose.AsyncImage
 import com.luminens.android.R
 import com.luminens.android.data.model.FilmPreset
 import com.luminens.android.data.model.FilmPresetsData
+import com.luminens.android.data.repository.GenerationRepository.PhotoCritiqueResult
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +93,7 @@ fun EditorScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var magicDialogOpen by remember { mutableStateOf(false) }
     var smartRetouchDialogOpen by remember { mutableStateOf(false) }
+    var critiqueDialogOpen by remember { mutableStateOf(false) }
     var magicPrompt by remember { mutableStateOf("") }
     var aspectRatio by remember { mutableStateOf("1:1") }
 
@@ -106,6 +110,10 @@ fun EditorScreen(
         state.magicError?.let { snackbarHostState.showSnackbar(it) }
     }
 
+    LaunchedEffect(state.critiqueError) {
+        state.critiqueError?.let { snackbarHostState.showSnackbar(it) }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -117,6 +125,12 @@ fun EditorScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        critiqueDialogOpen = true
+                        viewModel.analyzePhotoCritique()
+                    }) {
+                        Icon(Icons.Default.Star, contentDescription = stringResource(R.string.photo_critique_title))
+                    }
                     IconButton(onClick = { smartRetouchDialogOpen = true }) {
                         Icon(Icons.Default.AutoFixHigh, contentDescription = stringResource(R.string.smart_retouch_title))
                     }
@@ -241,7 +255,104 @@ fun EditorScreen(
                 },
             )
         }
+
+        if (critiqueDialogOpen) {
+            PhotoCritiqueDialog(
+                isLoading = state.isCritiqueLoading,
+                result = state.critiqueResult,
+                onRetry = viewModel::analyzePhotoCritique,
+                onDismiss = {
+                    critiqueDialogOpen = false
+                    viewModel.clearCritique()
+                },
+            )
+        }
     }
+}
+
+@Composable
+private fun PhotoCritiqueDialog(
+    isLoading: Boolean,
+    result: PhotoCritiqueResult?,
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.photo_critique_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (isLoading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Text(
+                        stringResource(R.string.photo_critique_analyzing),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                result?.let { critique ->
+                    Text(
+                        text = stringResource(R.string.photo_critique_overall, critique.overallScore),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+
+                    critique.categories.forEach { category ->
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = stringResource(R.string.photo_critique_category_score, category.name, category.score),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            if (category.comment.isNotBlank()) {
+                                Text(
+                                    text = category.comment,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (category.advice.isNotBlank()) {
+                                Text(
+                                    text = category.advice,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                        }
+                    }
+
+                    if (critique.topAdvice.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.photo_critique_top_advice),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        critique.topAdvice.forEachIndexed { index, advice ->
+                            Text(
+                                text = "${index + 1}. $advice",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (result == null) {
+                Button(onClick = onRetry, enabled = !isLoading) {
+                    Text(stringResource(R.string.retry))
+                }
+            } else {
+                Button(onClick = onDismiss) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable
