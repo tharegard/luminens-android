@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +43,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -50,11 +52,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,8 +67,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -75,6 +81,8 @@ import coil3.compose.AsyncImage
 import com.luminens.android.R
 import com.luminens.android.data.model.GenerationParams
 import com.luminens.android.data.model.PhotoStylesData
+import com.luminens.android.presentation.theme.OnSurfaceVariant
+import com.luminens.android.presentation.theme.SurfaceElevated
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,15 +139,35 @@ fun GenerateScreen(
                         GenerateStep.GENERATING -> stringResource(R.string.generating)
                         GenerateStep.RESULTS -> stringResource(R.string.generate_results)
                     }
-                    Text(title)
+                    Text(
+                        buildAnnotatedString {
+                            pushStyle(SpanStyle(color = Color.White))
+                            append("Lumi")
+                            pop()
+                            pushStyle(SpanStyle(color = MaterialTheme.colorScheme.primary))
+                            append("nens")
+                            pop()
+                            pushStyle(SpanStyle(color = OnSurfaceVariant))
+                            append("  •  ")
+                            append(title)
+                            pop()
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 },
                 navigationIcon = {
                     if (step == GenerateStep.STYLE || step == GenerateStep.SETTINGS) {
                         IconButton(onClick = viewModel::goBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = OnSurfaceVariant,
+                            )
                         }
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = SurfaceElevated),
             )
         }
     ) { padding ->
@@ -265,11 +293,21 @@ private fun StyleStep(
                 selected = selectedCategory == "adults",
                 onClick = { onCategorySelected("adults") },
                 label = { Text(stringResource(R.string.category_adults)) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    selectedLabelColor = Color.White,
+                    selectedLeadingIconColor = Color.White,
+                ),
             )
             FilterChip(
                 selected = selectedCategory == "kids",
                 onClick = { onCategorySelected("kids") },
                 label = { Text(stringResource(R.string.category_kids)) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    selectedLabelColor = Color.White,
+                    selectedLeadingIconColor = Color.White,
+                ),
             )
         }
 
@@ -307,14 +345,21 @@ private fun StyleStep(
                             },
                         )
                         Box(
-                            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth()
-                                .padding(8.dp),
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .fillMaxWidth()
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.42f)),
+                                    )
+                                )
+                                .padding(10.dp),
                         ) {
                             Text(
                                 text = style.name,
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = androidx.compose.ui.graphics.Color.White,
+                                color = Color.White,
                             )
                         }
                     }

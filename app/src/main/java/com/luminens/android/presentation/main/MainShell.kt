@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -33,6 +35,8 @@ import com.luminens.android.presentation.albums.AlbumsScreen
 import com.luminens.android.presentation.gallery.GalleryScreen
 import com.luminens.android.presentation.generate.GenerateScreen
 import com.luminens.android.presentation.navigation.Screen
+import com.luminens.android.presentation.theme.OnSurfaceVariant
+import com.luminens.android.presentation.theme.SurfaceElevated
 
 data class BottomNavItem(
     val screen: Screen,
@@ -65,7 +69,10 @@ fun MainShell(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = SurfaceElevated,
+                tonalElevation = 0.dp,
+            ) {
                 bottomNavItems.forEach { item ->
                     val selected = currentDestination?.hierarchy
                         ?.any { it.route == item.screen.route } == true
@@ -87,6 +94,13 @@ fun MainShell(
                             )
                         },
                         label = { Text(stringResource(item.labelRes)) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                            selectedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
+                            unselectedIconColor = OnSurfaceVariant,
+                            unselectedTextColor = OnSurfaceVariant,
+                            indicatorColor = androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                        ),
                     )
                 }
             }
