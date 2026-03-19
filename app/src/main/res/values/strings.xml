@@ -211,7 +211,7 @@
     <string name="magic_ai_feature_studio_light">Luce studio</string>
     <string name="magic_ai_feature_studio_light_prompt">Aggiungi illuminazione morbida da studio con ombre leggere</string>
     <string name="magic_ai_feature_enhance">Migliora dettagli</string>
-    <string name="magic_ai_feature_enhance_prompt">Migliora nitidezza e dettagli mantenendo l'identita</string>
+    <string name="magic_ai_feature_enhance_prompt">Migliora nitidezza e dettagli mantenendo l\'identita</string>
     <string name="magic_ai_feature_bokeh">Bokeh naturale</string>
     <string name="magic_ai_feature_bokeh_prompt">Crea sfocatura naturale dello sfondo e maggiore profondita</string>
     <string name="magic_ai_timeout_error">Magic AI in timeout. Riprova tra poco.</string>
