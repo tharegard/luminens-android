@@ -20,7 +20,9 @@ import kotlin.time.Duration.Companion.hours
 
 @Serializable
 private data class AlbumPhotoJoin(
+    @SerialName("album_id") val albumId: String? = null,
     @SerialName("photo_id") val photoId: String,
+    @SerialName("sort_order") val sortOrder: Int? = null,
 )
 
 class SupabaseDataSource @Inject constructor(
@@ -92,14 +94,19 @@ class SupabaseDataSource @Inject constructor(
     suspend fun getAlbumPhotos(albumId: String): List<Photo> = withContext(Dispatchers.IO) {
         // Schema was migrated to many-to-many: album_photos junction table
         val joins = db["album_photos"]
-            .select { filter { eq("album_id", albumId) } }
+            .select {
+                filter { eq("album_id", albumId) }
+                order("sort_order", Order.ASCENDING)
+            }
             .decodeList<AlbumPhotoJoin>()
         val photoIds = joins.map { it.photoId }
         if (photoIds.isEmpty()) return@withContext emptyList()
         val photos = db["photos"]
             .select { filter { isIn("id", photoIds) } }
             .decodeList<Photo>()
-        resolveSignedUrls(photos)
+        val resolved = resolveSignedUrls(photos)
+        val byId = resolved.associateBy { it.id }
+        joins.mapNotNull { join -> byId[join.photoId] }
     }
 
     suspend fun createAlbum(name: String): Album = withContext(Dispatchers.IO) {
@@ -107,6 +114,63 @@ class SupabaseDataSource @Inject constructor(
         db["albums"]
             .insert(mapOf("name" to name, "user_id" to uid))
             .decodeSingle<Album>()
+    }
+
+    suspend fun getAvailablePhotosForAlbum(albumId: String): List<Photo> = withContext(Dispatchers.IO) {
+        val uid = userId ?: return@withContext emptyList()
+        val allUserPhotos = db["photos"]
+            .select {
+                filter { eq("user_id", uid) }
+                order("created_at", Order.DESCENDING)
+            }
+            .decodeList<Photo>()
+
+        val albumPhotoIds = db["album_photos"]
+            .select { filter { eq("album_id", albumId) } }
+            .decodeList<AlbumPhotoJoin>()
+            .map { it.photoId }
+            .toSet()
+
+        resolveSignedUrls(allUserPhotos.filterNot { it.id in albumPhotoIds })
+    }
+
+    suspend fun addPhotosToAlbum(albumId: String, photoIds: List<String>) = withContext(Dispatchers.IO) {
+        if (photoIds.isEmpty()) return@withContext
+
+        val currentCount = db["album_photos"]
+            .select { filter { eq("album_id", albumId) } }
+            .decodeList<AlbumPhotoJoin>()
+            .size
+
+        val rows = photoIds.mapIndexed { index, photoId ->
+            mapOf(
+                "album_id" to albumId,
+                "photo_id" to photoId,
+                "sort_order" to (currentCount + index),
+            )
+        }
+        db["album_photos"].insert(rows)
+    }
+
+    suspend fun removePhotoFromAlbum(albumId: String, photoId: String) = withContext(Dispatchers.IO) {
+        db["album_photos"].delete {
+            filter {
+                eq("album_id", albumId)
+                eq("photo_id", photoId)
+            }
+        }
+    }
+
+    suspend fun reorderAlbumPhotos(albumId: String, orderedPhotoIds: List<String>) = withContext(Dispatchers.IO) {
+        if (orderedPhotoIds.isEmpty()) return@withContext
+        orderedPhotoIds.forEachIndexed { index, photoId ->
+            db["album_photos"].update(mapOf("sort_order" to index)) {
+                filter {
+                    eq("album_id", albumId)
+                    eq("photo_id", photoId)
+                }
+            }
+        }
     }
 
     suspend fun deleteAlbum(id: String) = withContext(Dispatchers.IO) {

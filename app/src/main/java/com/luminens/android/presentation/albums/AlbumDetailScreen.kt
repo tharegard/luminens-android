@@ -15,21 +15,26 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +53,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.offset
 import coil3.compose.AsyncImage
 import com.luminens.android.R
 import com.luminens.android.data.model.Photo
@@ -64,14 +72,18 @@ fun AlbumDetailScreen(
 ) {
     val albums by viewModel.albums.collectAsState()
     val photos by viewModel.albumPhotos.collectAsState()
+    val availablePhotos by viewModel.availablePhotos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val album = albums.firstOrNull { it.id == albumId }
     val clipboardManager = LocalClipboardManager.current
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
+    var showAddPhotosDialog by remember { mutableStateOf(false) }
+    var selectedToAdd by remember { mutableStateOf(setOf<String>()) }
 
     LaunchedEffect(albumId) {
         viewModel.loadAlbumPhotos(albumId)
+        viewModel.loadAvailablePhotosForAlbum(albumId)
     }
 
     if (showDeleteDialog) {
@@ -126,6 +138,77 @@ fun AlbumDetailScreen(
         )
     }
 
+    if (showAddPhotosDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showAddPhotosDialog = false
+                selectedToAdd = emptySet()
+            },
+            title = { Text(stringResource(R.string.add_photos)) },
+            text = {
+                if (availablePhotos.isEmpty()) {
+                    Text(stringResource(R.string.gallery_empty))
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(availablePhotos, key = { it.id }) { photo ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = {
+                                            selectedToAdd = if (photo.id in selectedToAdd) {
+                                                selectedToAdd - photo.id
+                                            } else {
+                                                selectedToAdd + photo.id
+                                            }
+                                        },
+                                        onLongClick = {},
+                                    )
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Checkbox(
+                                    checked = photo.id in selectedToAdd,
+                                    onCheckedChange = { checked ->
+                                        selectedToAdd = if (checked) selectedToAdd + photo.id else selectedToAdd - photo.id
+                                    },
+                                )
+                                AsyncImage(
+                                    model = photo.url,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.25f)
+                                        .aspectRatio(1f)
+                                        .clip(RoundedCornerShape(6.dp)),
+                                    contentScale = ContentScale.Crop,
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.addPhotosToAlbum(albumId, selectedToAdd.toList())
+                        showAddPhotosDialog = false
+                        selectedToAdd = emptySet()
+                    },
+                    enabled = selectedToAdd.isNotEmpty(),
+                ) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showAddPhotosDialog = false
+                    selectedToAdd = emptySet()
+                }) { Text(stringResource(R.string.cancel)) }
+            },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -136,6 +219,9 @@ fun AlbumDetailScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showAddPhotosDialog = true }) {
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_photos))
+                    }
                     IconButton(onClick = { showShareDialog = true }) {
                         Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_album))
                     }
@@ -160,7 +246,8 @@ fun AlbumDetailScreen(
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    items(photos, key = { it.id }) { photo ->
+                    items(photos.size, key = { photos[it].id }) { index ->
+                        val photo = photos[index]
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -178,6 +265,59 @@ fun AlbumDetailScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
                             )
+                            IconButton(
+                                onClick = { viewModel.removePhotoFromAlbum(albumId, photo.id) },
+                                modifier = Modifier.align(Alignment.TopEnd),
+                            ) {
+                                Icon(
+                                    Icons.Default.RemoveCircle,
+                                    contentDescription = stringResource(R.string.remove_from_album),
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(bottom = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        if (index > 0) {
+                                            val reordered = photos.map { it.id }.toMutableList()
+                                            val item = reordered.removeAt(index)
+                                            reordered.add(index - 1, item)
+                                            viewModel.reorderAlbumPhotos(albumId, reordered)
+                                        }
+                                    },
+                                    enabled = index > 0,
+                                    modifier = Modifier.offset(x = (-6).dp),
+                                ) {
+                                    Icon(
+                                        Icons.Default.ArrowBackIosNew,
+                                        contentDescription = "Move previous",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        if (index < photos.lastIndex) {
+                                            val reordered = photos.map { it.id }.toMutableList()
+                                            val item = reordered.removeAt(index)
+                                            reordered.add(index + 1, item)
+                                            viewModel.reorderAlbumPhotos(albumId, reordered)
+                                        }
+                                    },
+                                    enabled = index < photos.lastIndex,
+                                    modifier = Modifier.offset(x = 6.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Default.ArrowForwardIos,
+                                        contentDescription = "Move next",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                    )
+                                }
+                            }
                         }
                     }
                 }

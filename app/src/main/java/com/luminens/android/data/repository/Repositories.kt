@@ -35,6 +35,10 @@ class AlbumRepository @Inject constructor(
 ) {
     suspend fun getAlbums() = dataSource.getAlbums()
     suspend fun getAlbumPhotos(albumId: String) = dataSource.getAlbumPhotos(albumId)
+    suspend fun getAvailablePhotosForAlbum(albumId: String) = dataSource.getAvailablePhotosForAlbum(albumId)
+    suspend fun addPhotosToAlbum(albumId: String, photoIds: List<String>) = dataSource.addPhotosToAlbum(albumId, photoIds)
+    suspend fun removePhotoFromAlbum(albumId: String, photoId: String) = dataSource.removePhotoFromAlbum(albumId, photoId)
+    suspend fun reorderAlbumPhotos(albumId: String, orderedPhotoIds: List<String>) = dataSource.reorderAlbumPhotos(albumId, orderedPhotoIds)
     suspend fun createAlbum(name: String) = dataSource.createAlbum(name)
     suspend fun deleteAlbum(id: String) = dataSource.deleteAlbum(id)
     suspend fun updateAlbumPublic(id: String, isPublic: Boolean) =

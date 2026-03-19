@@ -27,6 +27,9 @@ class AlbumsViewModel @Inject constructor(
     private val _albumPhotos = MutableStateFlow<List<Photo>>(emptyList())
     val albumPhotos: StateFlow<List<Photo>> = _albumPhotos.asStateFlow()
 
+    private val _availablePhotos = MutableStateFlow<List<Photo>>(emptyList())
+    val availablePhotos: StateFlow<List<Photo>> = _availablePhotos.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -56,6 +59,56 @@ class AlbumsViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { albumRepository.createAlbum(name) }
                 .onSuccess { loadAlbums() }
+        }
+    }
+
+    fun loadAvailablePhotosForAlbum(albumId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            runCatching { albumRepository.getAvailablePhotosForAlbum(albumId) }
+                .onSuccess { _availablePhotos.value = it }
+                .onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun addPhotosToAlbum(albumId: String, photoIds: List<String>) {
+        if (photoIds.isEmpty()) return
+        viewModelScope.launch {
+            _isLoading.value = true
+            runCatching { albumRepository.addPhotosToAlbum(albumId, photoIds) }
+                .onSuccess {
+                    loadAlbumPhotos(albumId)
+                    loadAvailablePhotosForAlbum(albumId)
+                    loadAlbums()
+                }
+                .onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun removePhotoFromAlbum(albumId: String, photoId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            runCatching { albumRepository.removePhotoFromAlbum(albumId, photoId) }
+                .onSuccess {
+                    loadAlbumPhotos(albumId)
+                    loadAvailablePhotosForAlbum(albumId)
+                    loadAlbums()
+                }
+                .onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun reorderAlbumPhotos(albumId: String, orderedPhotoIds: List<String>) {
+        if (orderedPhotoIds.isEmpty()) return
+        viewModelScope.launch {
+            _isLoading.value = true
+            runCatching { albumRepository.reorderAlbumPhotos(albumId, orderedPhotoIds) }
+                .onSuccess { loadAlbumPhotos(albumId) }
+                .onFailure { _error.value = it.message }
+            _isLoading.value = false
         }
     }
 
