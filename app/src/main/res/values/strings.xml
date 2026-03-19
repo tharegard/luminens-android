@@ -56,7 +56,7 @@
     <string name="enhance_prompt">Migliora prompt</string>
     <string name="generate_button">Genera %d foto</string>
     <string name="generating">Generazione in corso…</string>
-    <string name="generation_progress">%d / %d foto</string>
+    <string name="generation_progress">%1$d / %2$d foto</string>
     <string name="generation_complete">Generazione completata!</string>
     <string name="save_to_gallery">Salva in galleria</string>
     <string name="create_album_from">Crea album</string>
