@@ -86,7 +86,7 @@ fun GenerateScreen(
     viewModel: GenerateViewModel = hiltViewModel(),
 ) {
     val step by viewModel.step.collectAsState()
-    val selectedImageUri by viewModel.selectedImageUri.collectAsState()
+    val selectedImageUris by viewModel.selectedImageUris.collectAsState()
     val selectedStyle by viewModel.selectedStyle.collectAsState()
     val prompt by viewModel.prompt.collectAsState()
     val params by viewModel.generationParams.collectAsState()
@@ -99,8 +99,10 @@ fun GenerateScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? -> uri?.let { viewModel.onImageSelected(it) } }
+        ActivityResultContracts.PickMultipleVisualMedia(maxItems = 4)
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) viewModel.onImagesSelected(uris)
+    }
 
     LaunchedEffect(error) {
         error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
@@ -160,7 +162,7 @@ fun GenerateScreen(
                     onStyleSelected = viewModel::onStyleSelected,
                 )
                 GenerateStep.SETTINGS -> SettingsStep(
-                    selectedImageUri = selectedImageUri,
+                    selectedImageUris = selectedImageUris,
                     prompt = prompt,
                     params = params,
                     maxShots = maxShots,
@@ -299,7 +301,7 @@ private fun StyleStep(onStyleSelected: (com.luminens.android.data.model.PhotoSty
 
 @Composable
 private fun SettingsStep(
-    selectedImageUri: Uri?,
+    selectedImageUris: List<Uri>,
     prompt: String,
     params: GenerationParams,
     maxShots: Int,
@@ -327,13 +329,24 @@ private fun SettingsStep(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        selectedImageUri?.let { uri ->
-            AsyncImage(
-                model = uri,
-                contentDescription = null,
-                modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop,
+        if (selectedImageUris.isNotEmpty()) {
+            Text(
+                stringResource(R.string.add_reference_photos),
+                style = MaterialTheme.typography.labelMedium,
             )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(selectedImageUris, key = { it.toString() }) { uri ->
+                    AsyncImage(
+                        model = uri,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .width(100.dp)
+                            .height(100.dp)
+                            .clip(RoundedCornerShape(10.dp)),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+            }
         }
 
         OutlinedTextField(

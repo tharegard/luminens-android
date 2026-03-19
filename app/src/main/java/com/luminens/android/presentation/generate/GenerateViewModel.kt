@@ -33,11 +33,15 @@ class GenerateViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
 ) : ViewModel() {
 
+    companion object {
+        private const val MAX_REFERENCE_PHOTOS = 4
+    }
+
     private val _step = MutableStateFlow(GenerateStep.UPLOAD)
     val step: StateFlow<GenerateStep> = _step.asStateFlow()
 
-    private val _selectedImageUri = MutableStateFlow<Uri?>(null)
-    val selectedImageUri: StateFlow<Uri?> = _selectedImageUri.asStateFlow()
+    private val _selectedImageUris = MutableStateFlow<List<Uri>>(emptyList())
+    val selectedImageUris: StateFlow<List<Uri>> = _selectedImageUris.asStateFlow()
 
     private val _selectedStyle = MutableStateFlow<PhotoStyle?>(null)
     val selectedStyle: StateFlow<PhotoStyle?> = _selectedStyle.asStateFlow()
@@ -89,7 +93,12 @@ class GenerateViewModel @Inject constructor(
     }
 
     fun onImageSelected(uri: Uri) {
-        _selectedImageUri.value = uri
+        _selectedImageUris.value = (_selectedImageUris.value + uri).distinct().take(MAX_REFERENCE_PHOTOS)
+        _step.value = GenerateStep.STYLE
+    }
+
+    fun onImagesSelected(uris: List<Uri>) {
+        _selectedImageUris.value = uris.distinct().take(MAX_REFERENCE_PHOTOS)
         _step.value = GenerateStep.STYLE
     }
 
@@ -147,7 +156,11 @@ class GenerateViewModel @Inject constructor(
     }
 
     fun generatePhotos() {
-        val uri = _selectedImageUri.value ?: return
+        val uris = _selectedImageUris.value.take(MAX_REFERENCE_PHOTOS)
+        if (uris.isEmpty()) {
+            _error.value = "Carica almeno una foto di riferimento"
+            return
+        }
         val style = _selectedStyle.value ?: return
         val params = _generationParams.value
         viewModelScope.launch {
@@ -156,13 +169,14 @@ class GenerateViewModel @Inject constructor(
             _error.value = null
             _generationStatus.value = "Preparo l'immagine..."
             runCatching {
-                val bytes = withContext(Dispatchers.IO) {
-                    appContext.contentResolver.openInputStream(uri)?.readBytes()
-                        ?: error("Cannot read image")
+                val refPaths = uris.mapIndexed { index, uri ->
+                    _generationStatus.value = "Carico foto di riferimento ${index + 1}/${uris.size}..."
+                    val bytes = withContext(Dispatchers.IO) {
+                        appContext.contentResolver.openInputStream(uri)?.readBytes()
+                            ?: error("Cannot read image")
+                    }
+                    generationRepository.uploadReferencePhoto(bytes)
                 }
-
-                _generationStatus.value = "Carico la foto di riferimento..."
-                val refPath = generationRepository.uploadReferencePhoto(bytes)
 
                 _generationStatus.value = "Genero ${params.numShots} foto..."
                 val urls = retryWithTimeout(
@@ -170,7 +184,7 @@ class GenerateViewModel @Inject constructor(
                     maxAttempts = 2,
                 ) {
                     generationRepository.generatePhotos(
-                        referenceImagePaths = listOf(refPath),
+                        imagePaths = refPaths,
                         style = style.id,
                         setting = params.setting.ifBlank { if (params.category == "kids") "kids-studio" else "studio" },
                         subSetting = params.subSetting,
@@ -190,7 +204,7 @@ class GenerateViewModel @Inject constructor(
             }.onFailure {
                 _error.value = when (it) {
                     is TimeoutCancellationException -> "Generazione troppo lenta. Riprova tra poco."
-                    else -> it.message
+                    else -> extractEdgeError(it.message)
                 }
                 _step.value = GenerateStep.SETTINGS
             }
@@ -203,7 +217,7 @@ class GenerateViewModel @Inject constructor(
 
     fun reset() {
         _step.value = GenerateStep.UPLOAD
-        _selectedImageUri.value = null
+        _selectedImageUris.value = emptyList()
         _selectedStyle.value = null
         _prompt.value = ""
         _generationParams.value = GenerationParams()
@@ -237,5 +251,12 @@ class GenerateViewModel @Inject constructor(
             }
         }
         throw (lastError ?: IllegalStateException("Operazione fallita"))
+    }
+
+    private fun extractEdgeError(message: String?): String {
+        val raw = message.orEmpty()
+        val regex = Regex("\\\"error\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"")
+        val extracted = regex.find(raw)?.groupValues?.getOrNull(1)
+        return extracted ?: raw.ifBlank { "Errore durante la generazione" }
     }
 }

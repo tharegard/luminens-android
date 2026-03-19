@@ -47,7 +47,7 @@ class GenerationRepository @Inject constructor(
      * Returns list of generated photo URLs.
      */
     suspend fun generatePhotos(
-        referenceImagePaths: List<String>,
+        imagePaths: List<String>,
         style: String,
         setting: String,
         subSetting: String? = null,
@@ -58,8 +58,8 @@ class GenerationRepository @Inject constructor(
         customPrompt: String? = null,
     ): List<String> = withContext(Dispatchers.IO) {
         val body = buildJsonObject {
-            putJsonArray("referenceImagePaths") {
-                referenceImagePaths.forEach { add(kotlinx.serialization.json.JsonPrimitive(it)) }
+            putJsonArray("imagePaths") {
+                imagePaths.forEach { add(kotlinx.serialization.json.JsonPrimitive(it)) }
             }
             put("style", style)
             put("setting", setting)
