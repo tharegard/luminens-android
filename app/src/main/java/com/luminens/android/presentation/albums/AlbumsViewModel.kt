@@ -125,4 +125,13 @@ class AlbumsViewModel @Inject constructor(
                 .onSuccess { loadAlbums() }
         }
     }
+
+    fun renameAlbum(albumId: String, newName: String) {
+        if (newName.isBlank()) return
+        viewModelScope.launch {
+            runCatching { albumRepository.updateAlbumName(albumId, newName.trim()) }
+                .onSuccess { loadAlbums() }
+                .onFailure { _error.value = it.message }
+        }
+    }
 }

@@ -42,6 +42,8 @@
     <string name="album_private">Private album</string>
     <string name="add_photos">Add photos</string>
     <string name="remove_from_album">Remove from album</string>
+    <string name="rename_album">Rename album</string>
+    <string name="rename_album_hint">Update the album name.</string>
     <string name="photos_count">%d photos</string>
 
     <!-- Generate -->

@@ -188,6 +188,10 @@ class SupabaseDataSource @Inject constructor(
         db["albums"].update(mapOf("is_public" to isPublic)) { filter { eq("id", id) } }
     }
 
+    suspend fun updateAlbumName(id: String, name: String) = withContext(Dispatchers.IO) {
+        db["albums"].update(mapOf("name" to name)) { filter { eq("id", id) } }
+    }
+
     // ── Print orders ───────────────────────────────────────────────────────────
 
     suspend fun getPrintOrders(): List<PrintOrder> = withContext(Dispatchers.IO) {

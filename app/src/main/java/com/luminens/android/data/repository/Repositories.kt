@@ -43,6 +43,7 @@ class AlbumRepository @Inject constructor(
     suspend fun deleteAlbum(id: String) = dataSource.deleteAlbum(id)
     suspend fun updateAlbumPublic(id: String, isPublic: Boolean) =
         dataSource.updateAlbumPublic(id, isPublic)
+    suspend fun updateAlbumName(id: String, name: String) = dataSource.updateAlbumName(id, name)
     suspend fun getPublicAlbum(id: String) = dataSource.getPublicAlbum(id)
     suspend fun getPublicAlbumPhotos(albumId: String) = dataSource.getPublicAlbumPhotos(albumId)
 }

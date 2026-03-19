@@ -2,6 +2,7 @@ package com.luminens.android.presentation.albums
 
 import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -88,7 +90,10 @@ fun AlbumDetailScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showAddPhotosDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
     var selectedToAdd by remember { mutableStateOf(setOf<String>()) }
+    var selectedPhotoIds by remember { mutableStateOf(setOf<String>()) }
+    var newAlbumName by remember { mutableStateOf("") }
 
     LaunchedEffect(albumId) {
         viewModel.loadAlbumPhotos(albumId)
@@ -100,6 +105,44 @@ fun AlbumDetailScreen(
             message = stringResource(R.string.delete_album_confirm),
             onConfirm = { viewModel.deleteAlbum(albumId); onBack() },
             onDismiss = { showDeleteDialog = false },
+        )
+    }
+
+    if (showRenameDialog && album != null) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = { Text(stringResource(R.string.rename_album)) },
+            text = {
+                androidx.compose.foundation.layout.Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(R.string.rename_album_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    androidx.compose.material3.OutlinedTextField(
+                        value = newAlbumName,
+                        onValueChange = { newAlbumName = it },
+                        label = { Text(stringResource(R.string.album_name)) },
+                        singleLine = true,
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.renameAlbum(albumId, newAlbumName)
+                        showRenameDialog = false
+                    },
+                    enabled = newAlbumName.isNotBlank() && newAlbumName.trim() != album.name,
+                ) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
         )
     }
 
@@ -175,6 +218,7 @@ fun AlbumDetailScreen(
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(availablePhotos, key = { it.id }) { photo ->
+
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -244,6 +288,25 @@ fun AlbumDetailScreen(
                     }
                 },
                 actions = {
+                    if (selectedPhotoIds.isNotEmpty()) {
+                        IconButton(onClick = {
+                            selectedPhotoIds.forEach { id ->
+                                viewModel.removePhotoFromAlbum(albumId, id)
+                            }
+                            selectedPhotoIds = emptySet()
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
+                        }
+                        IconButton(onClick = { selectedPhotoIds = emptySet() }) {
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.cancel))
+                        }
+                    }
+                    IconButton(onClick = {
+                        newAlbumName = album?.name.orEmpty()
+                        showRenameDialog = true
+                    }) {
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.rename_album))
+                    }
                     IconButton(onClick = { showAddPhotosDialog = true }) {
                         Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_photos))
                     }
@@ -280,7 +343,22 @@ fun AlbumDetailScreen(
                                 .clip(RoundedCornerShape(4.dp))
                                 .combinedClickable(
                                     onClick = {
-                                        photo.storagePath?.let { onEditPhoto(photo.id, it) }
+                                        if (selectedPhotoIds.isNotEmpty()) {
+                                            selectedPhotoIds = if (photo.id in selectedPhotoIds) {
+                                                selectedPhotoIds - photo.id
+                                            } else {
+                                                selectedPhotoIds + photo.id
+                                            }
+                                        } else {
+                                            photo.storagePath?.let { onEditPhoto(photo.id, it) }
+                                        }
+                                    },
+                                    onLongClick = {
+                                        selectedPhotoIds = if (photo.id in selectedPhotoIds) {
+                                            selectedPhotoIds - photo.id
+                                        } else {
+                                            selectedPhotoIds + photo.id
+                                        }
                                     }
                                 ),
                         ) {
@@ -299,6 +377,21 @@ fun AlbumDetailScreen(
                                     contentDescription = stringResource(R.string.remove_from_album),
                                     tint = MaterialTheme.colorScheme.error,
                                 )
+                            }
+
+                            if (photo.id in selectedPhotoIds) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(2.dp)
+                                        .clip(RoundedCornerShape(4.dp)),
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.22f))
+                                    )
+                                }
                             }
                             Row(
                                 modifier = Modifier
