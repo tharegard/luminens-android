@@ -57,7 +57,12 @@ class SupabaseDataSource @Inject constructor(
                 order("created_at", Order.DESCENDING)
             }
             .decodeList<Photo>()
-        resolveSignedUrls(photos)
+        val visiblePhotos = photos.filter { photo ->
+            val source = photo.positionData?.source
+            val hiddenFromGallery = photo.positionData?.hiddenFromGallery == true
+            !hiddenFromGallery && (photo.isGenerated || source == "gallery_upload")
+        }
+        resolveSignedUrls(visiblePhotos)
     }
 
     suspend fun deletePhoto(id: String, storagePath: String?) = withContext(Dispatchers.IO) {

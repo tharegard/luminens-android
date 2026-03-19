@@ -23,6 +23,8 @@ data class PositionData(
     val x: Double? = null,
     val y: Double? = null,
     @SerialName("baselineSettings") val baselineSettings: Map<String, Double>? = null,
+    val source: String? = null,
+    @SerialName("hidden_from_gallery") val hiddenFromGallery: Boolean? = null,
 )
 
 @Serializable
