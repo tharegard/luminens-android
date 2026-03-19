@@ -19,13 +19,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -320,7 +320,7 @@ fun AlbumDetailScreen(
                             Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
                         }
                         IconButton(onClick = { selectedPhotoIds = emptySet() }) {
-                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.cancel))
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel))
                         }
                     }
                     IconButton(onClick = {
@@ -330,7 +330,7 @@ fun AlbumDetailScreen(
                         Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.rename_album))
                     }
                     IconButton(onClick = { showAddPhotosDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_photos))
+                        Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.add_photos))
                     }
                     IconButton(onClick = { showShareDialog = true }) {
                         Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_album))
@@ -372,7 +372,9 @@ fun AlbumDetailScreen(
                                                 selectedPhotoIds + photo.id
                                             }
                                         } else {
-                                            photo.storagePath?.let { onEditPhoto(photo.id, it) }
+                                            if (photo.url.isNotBlank()) {
+                                                onEditPhoto(photo.id, photo.url)
+                                            }
                                         }
                                     },
                                     onLongClick = {

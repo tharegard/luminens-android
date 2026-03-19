@@ -2,14 +2,14 @@ package com.luminens.android.presentation.main
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Collections
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Collections
-import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.outlined.AutoFixHigh
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -46,9 +46,9 @@ data class BottomNavItem(
 )
 
 private val bottomNavItems = listOf(
-    BottomNavItem(Screen.Gallery, R.string.nav_gallery, Icons.Filled.PhotoLibrary, Icons.Outlined.PhotoLibrary),
-    BottomNavItem(Screen.Generate, R.string.nav_generate, Icons.Filled.AutoAwesome, Icons.Outlined.AutoAwesome),
-    BottomNavItem(Screen.Albums, R.string.nav_albums, Icons.Filled.Collections, Icons.Outlined.Collections),
+    BottomNavItem(Screen.Gallery, R.string.nav_gallery, Icons.Filled.Home, Icons.Outlined.Home),
+    BottomNavItem(Screen.Generate, R.string.nav_generate, Icons.Filled.AutoFixHigh, Icons.Outlined.AutoFixHigh),
+    BottomNavItem(Screen.Albums, R.string.nav_albums, Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook),
     BottomNavItem(Screen.Account, R.string.nav_account, Icons.Filled.AccountCircle, Icons.Outlined.AccountCircle),
 )
 

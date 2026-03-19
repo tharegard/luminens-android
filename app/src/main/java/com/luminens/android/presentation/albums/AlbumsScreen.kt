@@ -18,8 +18,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -135,7 +135,7 @@ fun AlbumsScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 2.dp),
             ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_album))
+                Icon(Icons.Default.CreateNewFolder, contentDescription = stringResource(R.string.create_album))
             }
         },
     ) { padding ->
@@ -210,7 +210,7 @@ private fun AlbumCard(album: Album, onClick: () -> Unit) {
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            Icons.Default.PhotoLibrary,
+                            Icons.AutoMirrored.Filled.MenuBook,
                             contentDescription = null,
                             tint = OnSurfaceVariant,
                             modifier = Modifier.height(36.dp),

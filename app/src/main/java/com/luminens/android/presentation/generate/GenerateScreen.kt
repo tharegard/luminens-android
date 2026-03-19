@@ -35,9 +35,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -244,7 +244,7 @@ private fun UploadStep(
             onClick = onPickImage,
             modifier = Modifier.fillMaxWidth().height(56.dp),
         ) {
-            Icon(Icons.Default.Image, contentDescription = null)
+            Icon(Icons.Default.PhotoLibrary, contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.pick_from_gallery))
         }
@@ -429,7 +429,7 @@ private fun SettingsStep(
             trailingIcon = {
                 if (!isLoading) {
                     IconButton(onClick = onEnhancePrompt) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = stringResource(R.string.enhance_prompt))
+                        Icon(Icons.Default.AutoFixHigh, contentDescription = stringResource(R.string.enhance_prompt))
                     }
                 }
             },
@@ -523,6 +523,8 @@ private fun SettingsStep(
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
             } else {
+                Icon(Icons.Default.AutoFixHigh, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.generate_button, params.numShots))
             }
         }

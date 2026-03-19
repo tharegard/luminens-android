@@ -15,8 +15,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -135,9 +135,11 @@ fun PhotoViewerScreen(
                         IconButton(onClick = onPrint) {
                             Icon(Icons.Default.Print, contentDescription = stringResource(R.string.print_order_title))
                         }
-                        if (currentPhoto?.storagePath != null) {
-                            IconButton(onClick = { onEdit(currentPhoto.id, currentPhoto.storagePath!!) }) {
-                                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
+                        if (!currentPhoto?.url.isNullOrBlank()) {
+                            IconButton(onClick = {
+                                currentPhoto?.let { photo -> onEdit(photo.id, photo.url) }
+                            }) {
+                                Icon(Icons.Default.AutoFixHigh, contentDescription = stringResource(R.string.edit))
                             }
                         }
                         IconButton(onClick = { showDeleteDialog = true }) {

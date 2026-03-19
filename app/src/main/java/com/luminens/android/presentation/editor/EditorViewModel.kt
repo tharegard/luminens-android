@@ -2,6 +2,10 @@ package com.luminens.android.presentation.editor
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.net.Uri
 import android.util.Base64
 import androidx.lifecycle.ViewModel
@@ -32,6 +36,7 @@ import javax.inject.Inject
 
 data class EditorState(
     val originalUri: Uri? = null,
+    val originalBitmap: Bitmap? = null,
     val currentBitmap: Bitmap? = null,
     val selectedPreset: FilmPreset? = null,
     val brightness: Float = 0f,         // -1..1 (GPUImage: -1..1)
@@ -93,10 +98,11 @@ class EditorViewModel @Inject constructor(
                 }
             } ?: return@launch
 
-            val filtered = withContext(Dispatchers.Default) {
-                runCatching { applyFilters(context, bitmap, EditorState()) }.getOrElse { bitmap }
-            }
-            _state.value = EditorState(originalUri = uri, currentBitmap = filtered)
+            _state.value = EditorState(
+                originalUri = uri,
+                originalBitmap = bitmap,
+                currentBitmap = bitmap,
+            )
             history.clear()
             redoStack.clear()
         }
@@ -275,9 +281,10 @@ class EditorViewModel @Inject constructor(
     }
 
     private fun rerender(context: Context) {
-        val original = _state.value.originalUri ?: return
+        val stateSnapshot = _state.value
+        val original = stateSnapshot.originalUri ?: return
         viewModelScope.launch {
-            val originalBitmap = withContext(Dispatchers.IO) {
+            val sourceBitmap = stateSnapshot.originalBitmap ?: withContext(Dispatchers.IO) {
                 try {
                     val stream = when (original.scheme?.lowercase()) {
                         "content", "file" -> context.contentResolver.openInputStream(original)
@@ -288,10 +295,17 @@ class EditorViewModel @Inject constructor(
                     null
                 }
             } ?: return@launch
+
+            val targetState = _state.value
             val filteredBitmap = withContext(Dispatchers.Default) {
-                runCatching { applyFilters(context, originalBitmap, _state.value) }.getOrElse { originalBitmap }
+                runCatching { applyFilters(context, sourceBitmap, targetState) }
+                    .getOrElse { applyBasicFiltersCpu(sourceBitmap, targetState) }
             }
-            _state.value = _state.value.copy(currentBitmap = filteredBitmap)
+
+            _state.value = _state.value.copy(
+                originalBitmap = _state.value.originalBitmap ?: sourceBitmap,
+                currentBitmap = filteredBitmap,
+            )
         }
     }
 
@@ -309,6 +323,43 @@ class EditorViewModel @Inject constructor(
         )
         gpuImage.setFilter(filters)
         return gpuImage.bitmapWithFilterApplied
+    }
+
+    private fun applyBasicFiltersCpu(source: Bitmap, state: EditorState): Bitmap {
+        val out = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(out)
+
+        val saturationMatrix = ColorMatrix().apply {
+            setSaturation(state.saturation.coerceIn(0f, 2f))
+        }
+
+        val hueMatrix = ColorMatrix().apply {
+            // Approximate hue rotation by rotating each RGB axis in color space.
+            setRotate(0, state.hue)
+            setRotate(1, state.hue)
+            setRotate(2, state.hue)
+        }
+
+        val contrast = (state.contrast + state.sharpen.coerceIn(0f, 4f) * 0.15f).coerceIn(0f, 4.8f)
+        val brightnessOffset = state.brightness.coerceIn(-1f, 1f) * 255f
+        val translate = 128f * (1f - contrast) + brightnessOffset
+        val contrastBrightnessMatrix = ColorMatrix(
+            floatArrayOf(
+                contrast, 0f, 0f, 0f, translate,
+                0f, contrast, 0f, 0f, translate,
+                0f, 0f, contrast, 0f, translate,
+                0f, 0f, 0f, 1f, 0f,
+            )
+        )
+
+        saturationMatrix.postConcat(hueMatrix)
+        saturationMatrix.postConcat(contrastBrightnessMatrix)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            colorFilter = ColorMatrixColorFilter(saturationMatrix)
+        }
+
+        canvas.drawBitmap(source, 0f, 0f, paint)
+        return out
     }
 
     private fun bitmapToDataUrl(bitmap: Bitmap): String {

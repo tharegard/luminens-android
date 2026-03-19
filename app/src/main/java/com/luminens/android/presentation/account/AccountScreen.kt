@@ -15,6 +15,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -22,6 +28,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -250,6 +257,8 @@ fun AccountScreen(
                         shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(1.dp, SurfaceBorder),
                     ) {
+                        Icon(Icons.Default.CreditCard, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.manage_subscription))
                     }
                 } else {
@@ -258,6 +267,8 @@ fun AccountScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                     ) {
+                        Icon(Icons.Default.WorkspacePremium, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.upgrade_to_pro))
                     }
                 }
@@ -269,6 +280,8 @@ fun AccountScreen(
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(1.dp, SurfaceBorder),
                 ) {
+                    Icon(Icons.Default.Print, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.print_order_title))
                 }
 
@@ -279,6 +292,8 @@ fun AccountScreen(
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(1.dp, SurfaceBorder),
                 ) {
+                    Icon(Icons.Default.History, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.order_history))
                 }
 
@@ -294,6 +309,8 @@ fun AccountScreen(
                         contentColor = MaterialTheme.colorScheme.error,
                     ),
                 ) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.sign_out))
                 }
             }
